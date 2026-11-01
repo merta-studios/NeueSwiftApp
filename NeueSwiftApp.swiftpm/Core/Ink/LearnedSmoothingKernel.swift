@@ -45,18 +45,51 @@ struct LearnedSmoothingKernel: Equatable {
 
     var isTrained: Bool { observations > 0 }
 
-    /// Wendet den Kern zentriert an; an den Enden wird der Randwert
-    /// fortgesetzt. Für die Live-Vorschau ist das genau richtig: die Spitze
-    /// bleibt an der Stiftspitze, weil „Zukunft“ dort noch nicht existiert.
-    func apply(_ points: [Vec2]) -> [Vec2] {
+    /// Wie der Kern über die Enden der Linie hinweg denkt.
+    enum EdgeMode: Equatable {
+        /// Randwert fortsetzen. Für die endgültige Linie: sie soll nicht über
+        /// die Stelle hinauslaufen, an der der Stift abgehoben hat.
+        case clamp
+        /// Richtung linear fortführen. Für die Live-Vorschau: existiert dort
+        /// noch keine „Zukunft“, wird die aktuelle Richtung verlängert – so
+        /// bleibt die Spitze an der Stiftspitze, statt hinterherzuziehen.
+        case extrapolate
+    }
+
+    /// Wendet den Kern zentriert auf die Punktreihe an.
+    func apply(_ points: [Vec2], edge: EdgeMode = .clamp) -> [Vec2] {
         let count = points.count
         guard count > 2 else { return points }
+
+        let first = points[0]
+        let second = points[1]
+        let last = points[count - 1]
+        let beforeLast = points[count - 2]
+
         var result = points
         for i in 0..<count {
             var x = 0.0
             var y = 0.0
             for k in 0..<taps {
-                let index = min(count - 1, max(0, i + k - half))
+                let index = i + k - half
+                if index < 0 {
+                    var point = first
+                    if edge == .extrapolate {
+                        point = first + (first - second) * Double(-index)
+                    }
+                    x += weights[k] * point.x
+                    y += weights[k] * point.y
+                    continue
+                }
+                if index > count - 1 {
+                    var point = last
+                    if edge == .extrapolate {
+                        point = last + (last - beforeLast) * Double(index - (count - 1))
+                    }
+                    x += weights[k] * point.x
+                    y += weights[k] * point.y
+                    continue
+                }
                 x += weights[k] * points[index].x
                 y += weights[k] * points[index].y
             }

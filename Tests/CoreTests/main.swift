@@ -448,6 +448,24 @@ var resetKernel = learnedKernel
 resetKernel.reset()
 expect(!resetKernel.isTrained, "Zurücksetzen löscht die Beobachtungen")
 
+// Randbehandlung: die Vorschau verlängert die Richtung, die Endfassung nicht.
+let rampLine = (0..<40).map { Vec2(Double($0) * 0.8, 5) }
+let clampedLine = LearnedSmoothingKernel.prior().apply(rampLine, edge: .clamp)
+let extrapolatedLine = LearnedSmoothingKernel.prior().apply(rampLine, edge: .extrapolate)
+expect(
+    extrapolatedLine[extrapolatedLine.count - 1].distance(to: rampLine[rampLine.count - 1]) < 1e-9,
+    "Mit Verlängerung bleibt die Spitze genau auf dem letzten Punkt"
+)
+expect(
+    clampedLine[clampedLine.count - 1].distance(to: rampLine[rampLine.count - 1])
+        >= extrapolatedLine[extrapolatedLine.count - 1].distance(to: rampLine[rampLine.count - 1]),
+    "Ohne Verlängerung zieht die Spitze eher hinterher"
+)
+expect(
+    extrapolatedLine.allSatisfy { abs($0.y - 5) < 1e-9 },
+    "Verlängerung verbiegt eine Gerade nicht"
+)
+
 // MARK: - Ecken
 
 var cornerShape: [Vec2] = []

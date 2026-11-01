@@ -220,7 +220,7 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
         for point in points {
             widest = max(widest, point.width)
         }
-        return InkMath.clamp(1 + 0.9 * widest, 1.6, 4)
+        return InkMath.clamp(0.8 + 0.6 * widest, 1.4, 3)
     }
 
     private func commit(_ stroke: LiveStroke) {

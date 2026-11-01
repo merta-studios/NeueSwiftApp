@@ -79,8 +79,16 @@ struct StrokeBeautifier {
             return dot(prepared.trace.points.first, style: style, inputs: inputs)
         }
 
-        let filtered = kernel.apply(prepared.trace.points)
-        let trace = prepared.trace
+        // Dieselbe Abtastung wie in der Endfassung: so hat die
+        // Morph-Animation später eine 1:1-Zuordnung und die Linie springt nicht.
+        let totalLength = PolylineGeometry.totalLength(prepared.trace.points)
+        let step = max(spacing, totalLength / Double(maximumPoints))
+        let trace = PolylineGeometry.resample(prepared.trace, spacing: step)
+        guard trace.count >= 2 else {
+            return dot(prepared.trace.points.first, style: style, inputs: inputs)
+        }
+
+        let filtered = kernel.apply(trace.points, edge: .extrapolate)
         var points: [InkPoint] = []
         points.reserveCapacity(trace.count)
         for i in 0..<trace.count {

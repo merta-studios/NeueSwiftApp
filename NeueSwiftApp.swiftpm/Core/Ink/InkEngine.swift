@@ -51,8 +51,12 @@ final class InkEngine {
         kernel.learn(raw: alignedRaw, target: targets)
 
         // 2) Profil: Zittern, Neigung, Druck, Tempo.
-        let tremorX = SignalFilters.highFrequencyEnergy(raw.map { $0.x })
-        let tremorY = SignalFilters.highFrequencyEnergy(raw.map { $0.y })
+        //    Das Zittern wird auf einer gleichmäßig abgetasteten Reihe gemessen;
+        //    sonst hängt der Wert am Schreibtempo statt an der Hand.
+        let uniform = PolylineGeometry.resample(prepared.trace, spacing: beautifier.spacing)
+        let tremorSource = uniform.count >= 4 ? uniform.points : raw
+        let tremorX = SignalFilters.highFrequencyEnergy(tremorSource.map { $0.x })
+        let tremorY = SignalFilters.highFrequencyEnergy(tremorSource.map { $0.y })
         let tremor = (tremorX * tremorX + tremorY * tremorY).squareRoot()
         let slant = StrokeBeautifier.slant(of: beautified)
 
