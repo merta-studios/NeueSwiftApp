@@ -68,7 +68,7 @@ enum SplineSmoother {
         var segment = [Int](repeating: 0, count: count)
         var local = [Double](repeating: 0, count: count)
         for i in 0..<count {
-            let u = inner * Double(i) / Double(count - 1)
+            let u = Double(inner) * Double(i) / Double(count - 1)
             let s = min(max(0, Int(u.rounded(.down))), inner - 1)
             segment[i] = s
             local[i] = u - Double(s)

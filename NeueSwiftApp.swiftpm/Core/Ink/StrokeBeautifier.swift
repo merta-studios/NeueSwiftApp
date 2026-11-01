@@ -40,7 +40,11 @@ struct StrokeBeautifier {
         cleaned = ShapeSnapping.applyPerSegment(
             cleaned, corners: corners, tolerance: style.snapTolerance
         )
-        cleaned = holdEndpoints(cleaned, target: raw, strength: 0.72)
+        // Der Spline verankert die Enden schon (Gewicht 400), es bleibt nur ein
+        // Rest von wenigen Tausendstelpunkten. Vollständig zurückziehen heißt:
+        // der Strich endet exakt dort, wo der Stift abgehoben hat – und die
+        // Morph-Animation springt an der Spitze nicht.
+        cleaned = holdEndpoints(cleaned, target: raw, strength: 1)
 
         var points = buildPoints(
             positions: cleaned,
