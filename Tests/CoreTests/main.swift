@@ -653,7 +653,17 @@ expectEqual(resetStyle.strokeCount, 0, "Zurücksetzen löscht die Strichzahl")
 let sloppy = sloppyInputs(samples: 180, jitter: 0.55, seed: 2024)
 let engine = InkEngine()
 let preview = engine.preview(sloppy)
-expectEqual(preview.count, sloppy.count, "Die Vorschau hat einen Punkt je Eingabe")
+// Die Vorschau wird auf dieselbe Abtastung gebracht wie die Endfassung –
+// nur so kann der Morph Punkt für Punkt überblenden.
+let expectedPreview = PolylineGeometry.resample(
+    StrokeBeautifier().prepare(sloppy, style: WritingStyle()).trace,
+    spacing: 0.8
+)
+expectEqual(
+    preview.count,
+    expectedPreview.count,
+    "Die Vorschau hat dieselbe Abtastung wie die Endfassung"
+)
 expect(
     preview.allSatisfy { $0.width > 0.4 && $0.width < 7 },
     "Vorschau-Breiten liegen im sinnvollen Bereich"
