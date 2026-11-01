@@ -458,13 +458,13 @@ expect(rampDeviation < 1e-6, "Eine Gerade bleibt eine Gerade (Abweichung \(rampD
 
 // Der Kreis ist der harte Fall: Ein Tiefpass zieht ihn zusammen, die
 // Spline-Anpassung darf das nicht.
-let circlePoints = (0..<120).map { i -> Vec2 in
+let splineCircle = (0..<120).map { i -> Vec2 in
     let angle = Double(i) / 119 * 2 * Double.pi
     return Vec2(60 + 26 * cos(angle), 60 + 26 * sin(angle))
 }
-let circleCorners = [Bool](repeating: false, count: circlePoints.count)
+let splineCircleCorners = [Bool](repeating: false, count: splineCircle.count)
 let circleSmoothed = SplineSmoother.smooth(
-    circlePoints, corners: circleCorners, settings: lineSettings
+    splineCircle, corners: splineCircleCorners, settings: lineSettings
 )
 func bounds(_ points: [Vec2]) -> (width: Double, height: Double) {
     var minX = points[0].x
@@ -479,7 +479,7 @@ func bounds(_ points: [Vec2]) -> (width: Double, height: Double) {
     }
     return (maxX - minX, maxY - minY)
 }
-let circleBefore = bounds(circlePoints)
+let circleBefore = bounds(splineCircle)
 let circleAfter = bounds(circleSmoothed)
 let widthKept = abs(circleAfter.width - circleBefore.width) < 1.5
 let heightKept = abs(circleAfter.height - circleBefore.height) < 1.5
