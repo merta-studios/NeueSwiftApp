@@ -101,6 +101,12 @@ sim_runtime="$(xcrun simctl list runtimes 2>/dev/null | grep -m 1 -E '^iOS' || e
 note "iOS-SDK (Simulator): $ios_sdk"
 note "$sim_runtime"
 
+xcode_line="$(xcodebuild -version 2>/dev/null | head -n 1)"
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    printf '::notice title=macOS-Buildumgebung::%s | iOS-SDK %s | %s\n' \
+        "$xcode_line" "$ios_sdk" "$sim_runtime"
+fi
+
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
     {
         echo "### macOS-Build-Umgebung"

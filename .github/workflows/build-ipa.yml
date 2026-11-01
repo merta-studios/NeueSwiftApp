@@ -11,6 +11,9 @@ name: IPA-Build (unsigniert)
 on:
   push:
     branches: [main]
+  # TEMPORÄR für die Erstprüfung dieses Pull Requests – wird vor dem Merge
+  # wieder entfernt, damit nicht bei jedem PR eine IPA gebaut wird.
+  pull_request:
   workflow_dispatch:
     inputs:
       ref:

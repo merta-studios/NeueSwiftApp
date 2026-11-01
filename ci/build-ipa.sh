@@ -140,6 +140,11 @@ sha256_of() { # sha256_of <datei> – macOS hat shasum, Linux hat sha256sum
 sha256_of "$out_dir/$ipa_name.ipa" >"$out_dir/$ipa_name.ipa.sha256"
 rm -rf "$payload_root"
 
+if [ -n "${GITHUB_ACTIONS:-}" ]; then
+    printf '::notice title=IPA::%s.ipa mit Payload/%s (Bundle-ID %s, Version %s (%s))\n' \
+        "$ipa_name" "$app_name" "$bundle_id" "$short_version" "$build_version"
+fi
+
 ok "IPA: $out_dir/$ipa_name.ipa ($(ls -lh "$out_dir/$ipa_name.ipa" | awk '{print $5}'))"
 note "Prüfsumme: $(cut -d' ' -f1 <"$out_dir/$ipa_name.ipa.sha256")"
 
