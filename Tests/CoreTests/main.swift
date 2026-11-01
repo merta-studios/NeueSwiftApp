@@ -90,9 +90,10 @@ expectEqual(
     "Beschreibung enthält die Vorabversion"
 )
 expectEqual(SemanticVersion("1.2.3+meta")?.description ?? "", "1.2.3", "Build-Metadaten entfallen")
-expectNil(
-    SemanticVersion(major: 1, minor: 0, patch: 0, prerelease: ""),
-    "Leere Vorabversion im Init"
+expectEqual(
+    SemanticVersion(major: 1, minor: 0, patch: 0, prerelease: "").description,
+    "1.0.0",
+    "Leere Vorabversion erscheint nicht in der Beschreibung"
 )
 expectEqual(
     SemanticVersion(major: 1, minor: 0, patch: 0, prerelease: ""),
