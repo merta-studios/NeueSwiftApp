@@ -58,14 +58,14 @@ Der Weg eines Strichs (`NeueSwiftApp.swiftpm/Core/Ink/`):
    Bogenlänge. Alle weiteren Schritte arbeiten in konstanten Punktabständen.
 3. **Ecken finden** (`CornerDetector`): Eine „n“-Spitze oder ein „v“-Knick muss
    scharf bleiben. Wer alles glättet, bekommt verwaschene Buchstaben.
-4. **Gelernte Glättung** (`LearnedSmoothingKernel`): Ein FIR-Kern, der aus den
-   Rohpunkten die schöne Linie schätzt. Seine Gewichte werden nach jedem Strich
-   per kleinster Quadrate (mit Ridge-Term) nachgeführt – das ist der Teil, der
-   *lernt*, statt mit festen Zahlen zu arbeiten.
-5. **Glättung im Winkelbereich** (`TangentSmoother`): Nicht die Punkte werden
-   gemittelt, sondern die Tangentenrichtung entlang der Bogenlänge. Dadurch
-   verschwindet Zittern, während Bogenlänge und großer Verlauf erhalten bleiben –
-   und Ecken bleiben Ecken, weil dort ein neuer Abschnitt beginnt.
+4. **Spline-Glättung** (`SplineSmoother`): Durch jeden Abschnitt zwischen zwei
+   Ecken wird eine B-Spline-Kurve gelegt, die mit möglichst wenigen Stützstellen
+   auskommt, aber an allen Punkten vorbeiläuft – mit Strafterm auf die
+   Biegeenergie und verankerten Enden. Kurzwelliges Zittern kann die Kurve
+   zwischen zwei Stützstellen gar nicht erst darstellen, große Buchstabenformen
+   bleiben. Warum nicht einfach ein Tiefpass? Ein gleitender Mittelwert zieht
+   jede Stelle nach innen; gemessen an einem Kreis wurde aus 52 Punkten Höhe ein
+   Oval von 26. Die Spline-Anpassung hält denselben Kreis auf 0,02 Punkte.
 6. **Formanpassung** (`ShapeSnapping`, `PrimitiveFitting`): Fast gerade
    Abschnitte werden ganz gerade, fast runde werden zum Kreisbogen – abgestuft
    nach Fit-Fehler, nie mit Gewalt.
@@ -83,8 +83,9 @@ Der Weg eines Strichs (`NeueSwiftApp.swiftpm/Core/Ink/`):
 ### Das Lernen
 
 `WritingStyle` führt eine laufende Statistik über die eigene Schrift: Zittern,
-Neigung, typischer Druck, typisches Tempo. Daraus folgen Glättungsstärke,
-Fit-Toleranz und Neigungskorrektur. Am Anfang ist das Profil unsicher und
+Neigung, typischer Druck, typisches Tempo. Daraus folgen der Stützstellenabstand
+der Spline-Glättung (mehr Zittern → weitere Stützstellen), Fit-Toleranz,
+Vorschau-Weite und Neigungskorrektur. Am Anfang ist das Profil unsicher und
 korrigiert kaum; mit jedem Strich wird es sicherer. Nichts davon wird
 gespeichert oder verschickt – das Profil entsteht in der Sitzung und ist beim
 nächsten Start wieder bei null.
@@ -131,9 +132,8 @@ NeueSwiftApp.swiftpm/            Swift-Playgrounds-App-Paket
       PolylineGeometry.swift     Bogenlänge, Resampling, Abstände
       LinearAlgebra.swift        kleine dichte Gleichungssysteme
       SignalFilters.swift        Median, Gauß, hochfrequente Energie
-      LearnedSmoothingKernel.swift  gelernter Glättungskern
       CornerDetector.swift       echte Ecken finden
-      TangentSmoother.swift      Glättung im Winkelbereich
+      SplineSmoother.swift       B-Spline-Anpassung (Glättung)
       PrimitiveFitting.swift     Gerade und Kreis anpassen
       ShapeSnapping.swift        Linie sanft auf die Form ziehen
       TerminalTrimmer.swift      Überschwinger an den Enden
@@ -173,10 +173,10 @@ ci/build-ipa.sh             # unsignierte IPA nach build/NeueSwiftApp.ipa
 
 Die Tests der Tinten-Engine laufen unter Linux mit `swiftc` – ohne UIKit, ohne
 iPad. Sie prüfen echte Eigenschaften: dass Resampling den Punktabstand hält,
-dass Glättung Zittern senkt und Endpunkte festhält, dass Ecken erkannt und
-saubere Linien nicht gekürzt werden, dass der gelernte Kern die Ziellinie besser
-trifft, dass ein gerader Strich gerade bleibt und dass nichts abstürzt (leere
-Eingabe, ein Punkt, doppelte Punkte, ungültige Koordinaten).
+dass die Spline-Glättung Zittern senkt und Endpunkte festhält, dass eine Gerade
+gerade bleibt und ein Kreis ein Kreis, dass Ecken erkannt und an ihrem Platz
+gehalten werden, dass saubere Linien nicht gekürzt werden und dass nichts
+abstürzt (leere Eingabe, ein Punkt, doppelte Punkte, ungültige Koordinaten).
 
 ## Unterstützte Versionen
 

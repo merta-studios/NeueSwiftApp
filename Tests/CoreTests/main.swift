@@ -409,62 +409,105 @@ expect(
     "Eine Gerade hat keine hochfrequente Energie"
 )
 
-// MARK: - Gelernten Glättungskern
+// MARK: - Spline-Glättung
 
-var freshKernel = LearnedSmoothingKernel.prior()
-expect(abs(freshKernel.weights.reduce(0, +) - 1) < 1e-9, "Startkern ist auf 1 normiert")
-expect(!freshKernel.isTrained, "Frischer Kern ist untrainiert")
-expectEqual(freshKernel.taps, 7, "Startkern hat sieben Abgriffe")
-expect(freshKernel.half == 3, "Startkern ist zentriert")
-
-expect(LearnedSmoothingKernel(taps: 6).taps == 7, "Ungerade Abgriffzahl wird erzwungen")
-expect(
-    LearnedSmoothingKernel(taps: 7, weights: [1, 1, 1, 1, 1, 1, 1]).weights[0] > 0.14,
-    "Gewichte werden normiert"
-)
-
-var learnRandom = TestRandom(seed: 99)
-let cleanWave = (0..<140).map { i -> Vec2 in
-    Vec2(Double(i) * 0.8, 18 * sin(Double(i) * 0.06))
+var splineRandom = TestRandom(seed: 5)
+let jitteryLine = (0..<80).map { i -> Vec2 in
+    Vec2(Double(i) * 0.8, splineRandom.next() * 0.9)
 }
-let noisyWave = cleanWave.map { point in
-    point + Vec2(learnRandom.next() * 0.55, learnRandom.next() * 0.55)
+let noCorners = [Bool](repeating: false, count: jitteryLine.count)
+var lineSettings = SplineSmoother.Settings()
+lineSettings.knotSpacing = 3
+lineSettings.spacing = 0.8
+let splineSmoothed = SplineSmoother.smooth(
+    jitteryLine, corners: noCorners, settings: lineSettings
+)
+expect(
+    splineSmoothed[0].distance(to: jitteryLine[0]) < 0.05,
+    "Spline-Glättung hält den Startpunkt fest"
+)
+expect(
+    splineSmoothed[splineSmoothed.count - 1]
+        .distance(to: jitteryLine[jitteryLine.count - 1]) < 0.05,
+    "Spline-Glättung hält den Endpunkt fest"
+)
+expect(
+    roughness(splineSmoothed) < roughness(jitteryLine) * 0.5,
+    "Spline-Glättung halbiert das Zittern "
+        + "(\(roughness(jitteryLine)) → \(roughness(splineSmoothed)))"
+)
+expect(
+    abs(PolylineGeometry.totalLength(splineSmoothed) - PolylineGeometry.totalLength(jitteryLine))
+        < 0.6 * PolylineGeometry.totalLength(jitteryLine),
+    "Spline-Glättung verändert die Länge nicht grob"
+)
+expect(
+    meanDistance(splineSmoothed, jitteryLine) < 1.2,
+    "Spline-Glättung bleibt an ihrer Linie "
+        + "(Abweichung \(meanDistance(splineSmoothed, jitteryLine)))"
+)
+
+// Eine Gerade muss eine Gerade bleiben – auch mit Störungen darauf.
+let straightRamp = (0..<90).map { Vec2(Double($0) * 0.8, 10 + Double($0) * 0.2) }
+let rampSmoothed = SplineSmoother.smooth(straightRamp, corners: noCorners, settings: lineSettings)
+var rampDeviation = 0.0
+for i in 0..<straightRamp.count {
+    rampDeviation = max(rampDeviation, rampSmoothed[i].distance(to: straightRamp[i]))
+}
+expect(rampDeviation < 1e-6, "Eine Gerade bleibt eine Gerade (Abweichung \(rampDeviation))")
+
+// Der Kreis ist der harte Fall: Ein Tiefpass zieht ihn zusammen, die
+// Spline-Anpassung darf das nicht.
+let circlePoints = (0..<120).map { i -> Vec2 in
+    let angle = Double(i) / 119 * 2 * Double.pi
+    return Vec2(60 + 26 * cos(angle), 60 + 26 * sin(angle))
+}
+let circleCorners = [Bool](repeating: false, count: circlePoints.count)
+let circleSmoothed = SplineSmoother.smooth(
+    circlePoints, corners: circleCorners, settings: lineSettings
+)
+func bounds(_ points: [Vec2]) -> (width: Double, height: Double) {
+    var minX = points[0].x
+    var maxX = points[0].x
+    var minY = points[0].y
+    var maxY = points[0].y
+    for point in points {
+        minX = min(minX, point.x)
+        maxX = max(maxX, point.x)
+        minY = min(minY, point.y)
+        maxY = max(maxY, point.y)
+    }
+    return (maxX - minX, maxY - minY)
+}
+let circleBefore = bounds(circlePoints)
+let circleAfter = bounds(circleSmoothed)
+let widthKept = abs(circleAfter.width - circleBefore.width) < 1.5
+let heightKept = abs(circleAfter.height - circleBefore.height) < 1.5
+expect(widthKept && heightKept, "Der Kreis bleibt ein Kreis (\(circleBefore) → \(circleAfter))")
+
+// Ein Knick bleibt scharf: die Ecke sitzt danach noch am Knick.
+var vShape: [Vec2] = []
+for i in 0...30 {
+    vShape.append(Vec2(Double(i) * 0.8, Double(i) * 0.4))
+}
+for i in 1...30 {
+    vShape.append(Vec2(24 - Double(i) * 0.8, 12 + Double(i) * 0.4))
+}
+let vCorners = CornerDetector.detect(points: vShape, spacing: 0.8)
+let vSmoothed = SplineSmoother.smooth(vShape, corners: vCorners, settings: lineSettings)
+let vIndices = CornerDetector.cornerIndices(of: vCorners)
+if let cornerIndex = vIndices.first {
+    expect(
+        vSmoothed[cornerIndex].distance(to: vShape[cornerIndex]) < 1e-6,
+        "Die Ecke bleibt beim Glätten an ihrem Platz"
+    )
 }
 
-var learnedKernel = LearnedSmoothingKernel.prior()
-let errorBefore = meanDistance(learnedKernel.apply(noisyWave), cleanWave)
-for _ in 0..<8 {
-    learnedKernel.learn(raw: noisyWave, target: cleanWave)
-}
-let errorAfter = meanDistance(learnedKernel.apply(noisyWave), cleanWave)
-expect(learnedKernel.observations == 8, "Kern zählt seine Beobachtungen")
-expect(
-    errorAfter < errorBefore,
-    "Gelernter Kern trifft die Ziellinie besser (\(errorBefore) → \(errorAfter))"
-)
-expect(abs(learnedKernel.weights.reduce(0, +) - 1) < 1e-9, "Gelernter Kern bleibt normiert")
-
-var resetKernel = learnedKernel
-resetKernel.reset()
-expect(!resetKernel.isTrained, "Zurücksetzen löscht die Beobachtungen")
-
-// Randbehandlung: die Vorschau verlängert die Richtung, die Endfassung nicht.
-let rampLine = (0..<40).map { Vec2(Double($0) * 0.8, 5) }
-let clampedLine = LearnedSmoothingKernel.prior().apply(rampLine, edge: .clamp)
-let extrapolatedLine = LearnedSmoothingKernel.prior().apply(rampLine, edge: .extrapolate)
-expect(
-    extrapolatedLine[extrapolatedLine.count - 1].distance(to: rampLine[rampLine.count - 1]) < 1e-9,
-    "Mit Verlängerung bleibt die Spitze genau auf dem letzten Punkt"
-)
-expect(
-    clampedLine[clampedLine.count - 1].distance(to: rampLine[rampLine.count - 1])
-        >= extrapolatedLine[extrapolatedLine.count - 1].distance(to: rampLine[rampLine.count - 1]),
-    "Ohne Verlängerung zieht die Spitze eher hinterher"
-)
-expect(
-    extrapolatedLine.allSatisfy { abs($0.y - 5) < 1e-9 },
-    "Verlängerung verbiegt eine Gerade nicht"
-)
+let cornerMask = [false, false, false, true, false, false, false, false, false]
+let cornerRange = PolylineGeometry.segments(9, corners: cornerMask)
+expectEqual(cornerRange.count, 2, "Ecken zerlegen den Strich in zwei Abschnitte")
+expectEqual(cornerRange[0].upperBound, 4, "Der Eckpunkt gehört zum ersten Abschnitt")
+expectEqual(cornerRange[1].lowerBound, 3, "Der Eckpunkt gehört auch zum zweiten Abschnitt")
 
 // MARK: - Ecken
 
@@ -494,40 +537,6 @@ let arcPoints = (0...60).map { i -> Vec2 in
 }
 let arcFlags = CornerDetector.detect(points: arcPoints, spacing: 0.8)
 expect(!arcFlags.contains(true), "Ein ruhiger Bogen hat keine Ecke")
-
-// MARK: - Glättung im Winkelbereich
-
-var smoothRandom = TestRandom(seed: 5)
-let jitteryLine = (0..<80).map { i -> Vec2 in
-    Vec2(Double(i) * 0.8, smoothRandom.next() * 0.9)
-}
-let noCorners = [Bool](repeating: false, count: jitteryLine.count)
-let angleSmoothed = TangentSmoother.smooth(
-    jitteryLine, corners: noCorners, sigma: 3, spacing: 0.8
-)
-expect(
-    angleSmoothed[0].distance(to: jitteryLine[0]) < 1e-9,
-    "Glättung hält den Startpunkt fest"
-)
-expect(
-    angleSmoothed[angleSmoothed.count - 1].distance(to: jitteryLine[jitteryLine.count - 1]) < 1e-9,
-    "Glättung hält den Endpunkt fest"
-)
-expect(
-    roughness(angleSmoothed) < roughness(jitteryLine) * 0.5,
-    "Glättung halbiert das Zittern (\(roughness(jitteryLine)) → \(roughness(angleSmoothed)))"
-)
-expect(
-    abs(PolylineGeometry.totalLength(angleSmoothed) - PolylineGeometry.totalLength(jitteryLine))
-        < 0.6 * PolylineGeometry.totalLength(jitteryLine),
-    "Glättung verändert die Länge nicht grob"
-)
-
-let cornerMask = [false, false, false, true, false, false, false, false, false]
-let cornerRange = TangentSmoother.segments(9, corners: cornerMask)
-expectEqual(cornerRange.count, 2, "Ecken zerlegen den Strich in zwei Abschnitte")
-expectEqual(cornerRange[0].upperBound, 3, "Der Eckpunkt gehört zum ersten Abschnitt")
-expectEqual(cornerRange[1].lowerBound, 3, "Der Eckpunkt gehört auch zum zweiten Abschnitt")
 
 // MARK: - Formanpassung
 
@@ -606,7 +615,10 @@ expectEqual(farResult.points.count, approaching.count, "Verbinden ändert die Pu
 
 var style = WritingStyle()
 expect(style.confidence < 0.2, "Ein frisches Profil ist unsicher")
-expect(style.smoothingSigma >= 1.4 && style.smoothingSigma <= 4.5, "Glättung bleibt im Rahmen")
+expect(
+    style.knotSpacing >= 2.5 && style.knotSpacing <= 3.5,
+    "Stützweite der Glättung bleibt im Rahmen"
+)
 
 let lightTouch = style.width(pressure: 0.1, hasPressure: true, speed: 200, altitude: 1.5)
 let firmTouch = style.width(pressure: 0.4, hasPressure: true, speed: 200, altitude: 1.5)
@@ -630,7 +642,7 @@ expectEqual(style.strokeCount, 20, "Profil zählt die Striche")
 expect(style.confidence > 0.99, "Nach vielen Strichen ist das Profil sicher")
 expect(style.slant > 0.2, "Das Profil übernimmt die beobachtete Neigung")
 expect(style.tremor > 0.3, "Das Profil merkt sich stärkeres Zittern")
-expect(style.smoothingSigma > 3, "Starkes Zittern führt zu stärkerer Glättung")
+expect(style.knotSpacing > 3, "Starkes Zittern führt zu weiteren Stützstellen")
 
 var resetStyle = style
 resetStyle.reset()
@@ -681,18 +693,16 @@ expect(
 )
 expectEqual(engine.finishedStrokes, 1, "Die Engine zählt fertige Striche")
 expectEqual(engine.style.strokeCount, 1, "Das Profil hat den Strich übernommen")
-expectEqual(engine.kernel.observations, 1, "Der Kern hat aus dem Strich gelernt")
 
-// Mehrere Striche: das Profil wird sicherer, der Kern bleibt gesund.
+// Mehrere Striche: das Profil wird sicherer und bleibt im Rahmen.
 for index in 0..<8 {
     _ = engine.finish(sloppyInputs(samples: 120, jitter: 0.5, seed: UInt64(100 + index)))
 }
 expectEqual(engine.style.strokeCount, 9, "Alle Striche landen im Profil")
 expect(engine.style.confidence > 0.85, "Das Profil ist nach neun Strichen belastbar")
-expect(abs(engine.kernel.weights.reduce(0, +) - 1) < 1e-9, "Der Kern bleibt normiert")
 expect(
-    engine.kernel.weights.allSatisfy { $0.isFinite && abs($0) < 2 },
-    "Die gelernten Gewichte bleiben beherrschbar"
+    engine.style.tremor.isFinite && engine.style.knotSpacing >= 2.5,
+    "Die gelernte Stützweite bleibt beherrschbar"
 )
 
 // Ein perfekt gerader Strich muss gerade bleiben.

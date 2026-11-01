@@ -2,31 +2,29 @@ import Foundation
 
 /// Verbindet Stift-Eingabe, Beautifier und Lernen.
 ///
-/// Die Engine ist das Gedächtnis der App: Sie hält das gelernte Schreibprofil
-/// und den gelernten Glättungskern, liefert die Live-Linie während des
-/// Schreibens und die schöne Linie nach dem Abheben des Stifts. Sie kennt kein
-/// UIKit – dieselbe Klasse läuft in der App und in den Tests unter Linux.
+/// Die Engine ist das Gedächtnis der App: Sie hält das gelernte Schreibprofil,
+/// liefert die Live-Linie während des Schreibens und die schöne Linie nach dem
+/// Abheben des Stifts. Sie kennt kein UIKit – dieselbe Klasse läuft in der App
+/// und in den Tests unter Linux.
 final class InkEngine {
     private(set) var style: WritingStyle
-    private(set) var kernel: LearnedSmoothingKernel
     private(set) var finishedStrokes: Int = 0
 
     private let beautifier: StrokeBeautifier
 
-    init(style: WritingStyle = WritingStyle(), kernel: LearnedSmoothingKernel = .prior()) {
+    init(style: WritingStyle = WritingStyle()) {
         self.style = style
-        self.kernel = kernel
         self.beautifier = StrokeBeautifier()
     }
 
     /// Linie, die während des Schreibens gezeichnet wird.
     func preview(_ inputs: [InkInput]) -> [InkPoint] {
-        beautifier.preview(inputs, style: style, kernel: kernel)
+        beautifier.preview(inputs, style: style)
     }
 
     /// Fertige, aufbereitete Linie – und Anlass, das Profil nachzuführen.
     func finish(_ inputs: [InkInput]) -> [InkPoint] {
-        let beautified = beautifier.beautify(inputs, style: style, kernel: kernel)
+        let beautified = beautifier.beautify(inputs, style: style)
         learn(from: inputs, beautified: beautified)
         finishedStrokes += 1
         return beautified
@@ -34,7 +32,6 @@ final class InkEngine {
 
     func reset() {
         style.reset()
-        kernel.reset()
         finishedStrokes = 0
     }
 
@@ -45,14 +42,9 @@ final class InkEngine {
         let raw = prepared.trace.points
         guard raw.count >= 3, beautified.count >= 3 else { return }
 
-        // 1) Glättungskern: rohe Linie → schöne Linie.
-        let alignedRaw = PolylineGeometry.resample(raw, count: beautified.count)
-        let targets = beautified.map { $0.position }
-        kernel.learn(raw: alignedRaw, target: targets)
-
-        // 2) Profil: Zittern, Neigung, Druck, Tempo.
-        //    Das Zittern wird auf einer gleichmäßig abgetasteten Reihe gemessen;
-        //    sonst hängt der Wert am Schreibtempo statt an der Hand.
+        // Profil: Zittern, Neigung, Druck, Tempo. Das Zittern wird auf einer
+        // gleichmäßig abgetasteten Reihe gemessen; sonst hängt der Wert am
+        // Schreibtempo statt an der Hand.
         let uniform = PolylineGeometry.resample(prepared.trace, spacing: beautifier.spacing)
         let tremorSource = uniform.count >= 4 ? uniform.points : raw
         let tremorX = SignalFilters.highFrequencyEnergy(tremorSource.map { $0.x })

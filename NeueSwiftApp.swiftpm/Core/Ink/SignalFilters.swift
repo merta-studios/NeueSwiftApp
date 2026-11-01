@@ -35,8 +35,20 @@ enum SignalFilters {
         return result
     }
 
+    /// Wie die Ränder eines Filters behandelt werden.
+    enum Edge: Equatable {
+        /// Randwert wiederholen – das Ende bleibt, wo es ist.
+        case clamp
+        /// Randrichtung geradlinig fortsetzen – die Spitze läuft nicht hinterher.
+        case extrapolate
+    }
+
     /// Gauß-Filter mit Sigma in Samples.
-    static func gaussianSmooth(_ values: [Double], sigma: Double) -> [Double] {
+    static func gaussianSmooth(
+        _ values: [Double],
+        sigma: Double,
+        edge: Edge = .clamp
+    ) -> [Double] {
         let count = values.count
         guard count > 2, sigma > 0.05 else { return values }
 
@@ -53,13 +65,32 @@ enum SignalFilters {
             kernel[k] /= total
         }
 
+        func sample(_ index: Int) -> Double {
+            if index < 0 {
+                switch edge {
+                case .clamp:
+                    return values[0]
+                case .extrapolate:
+                    return values[0] + (values[0] - values[1]) * Double(-index)
+                }
+            }
+            if index >= count {
+                switch edge {
+                case .clamp:
+                    return values[count - 1]
+                case .extrapolate:
+                    return values[count - 1]
+                        + (values[count - 1] - values[count - 2]) * Double(index - count + 1)
+                }
+            }
+            return values[index]
+        }
+
         var result = values
         for i in 0..<count {
             var accumulator = kernel[0] * values[i]
             for k in 1...radius {
-                let ahead = values[min(count - 1, i + k)]
-                let behind = values[max(0, i - k)]
-                accumulator += kernel[k] * (ahead + behind)
+                accumulator += kernel[k] * (sample(i + k) + sample(i - k))
             }
             result[i] = accumulator
         }
@@ -67,7 +98,11 @@ enum SignalFilters {
     }
 
     /// Gauß-Filter auf Punkten, getrennt je Achse.
-    static func gaussianSmooth(_ points: [Vec2], sigma: Double) -> [Vec2] {
+    static func gaussianSmooth(
+        _ points: [Vec2],
+        sigma: Double,
+        edge: Edge = .clamp
+    ) -> [Vec2] {
         guard points.count > 2, sigma > 0.05 else { return points }
         var xs = [Double](repeating: 0, count: points.count)
         var ys = [Double](repeating: 0, count: points.count)
@@ -75,8 +110,8 @@ enum SignalFilters {
             xs[index] = point.x
             ys[index] = point.y
         }
-        let smoothX = gaussianSmooth(xs, sigma: sigma)
-        let smoothY = gaussianSmooth(ys, sigma: sigma)
+        let smoothX = gaussianSmooth(xs, sigma: sigma, edge: edge)
+        let smoothY = gaussianSmooth(ys, sigma: sigma, edge: edge)
         var result = points
         for index in points.indices {
             result[index] = Vec2(smoothX[index], smoothY[index])

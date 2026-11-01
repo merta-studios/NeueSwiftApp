@@ -4,12 +4,11 @@ import Foundation
 ///
 /// 1. Rohpunkte säubern (Doppelpunkte, Ausreißer) und gleichmäßig abtasten.
 /// 2. Echte Ecken finden (die bleiben scharf).
-/// 3. Gelernten Glättungskern anwenden.
-/// 4. Tangentenrichtung glätten – der eigentliche Zittern-Killer.
-/// 5. Fast-gerade und fast-runde Abschnitte sanft auf die Form ziehen.
-/// 6. Endpunkte dort halten, wo der Stift sie gesetzt hat.
-/// 7. Strichbreite aus Druck und Tempo aufbauen, weich auslaufen lassen.
-/// 8. Überschwinger an den Enden entfernen, Neigung an das Profil angleichen.
+/// 3. B-Spline-Anpassung je Abschnitt – der eigentliche Zittern-Killer.
+/// 4. Fast-gerade und fast-runde Abschnitte sanft auf die Form ziehen.
+/// 5. Endpunkte dort halten, wo der Stift sie gesetzt hat.
+/// 6. Strichbreite aus Druck und Tempo aufbauen, weich auslaufen lassen.
+/// 7. Überschwinger an den Enden entfernen, Neigung am Profil angleichen.
 struct StrokeBeautifier {
     /// Punktabstand der Aufbereitung in Seitenpunkten.
     var spacing: Double = 0.8
@@ -17,11 +16,7 @@ struct StrokeBeautifier {
     var maximumPoints: Int = 1400
 
     /// Die aufbereitete Linie für einen fertigen Strich.
-    func beautify(
-        _ inputs: [InkInput],
-        style: WritingStyle,
-        kernel: LearnedSmoothingKernel
-    ) -> [InkPoint] {
+    func beautify(_ inputs: [InkInput], style: WritingStyle) -> [InkPoint] {
         let prepared = prepare(inputs, style: style)
         guard prepared.trace.count >= 2 else {
             return dot(prepared.trace.points.first, style: style, inputs: inputs)
@@ -40,10 +35,8 @@ struct StrokeBeautifier {
 
         let raw = trace.points
         let corners = CornerDetector.detect(points: raw, spacing: trace.spacing)
-        var cleaned = kernel.apply(raw)
-        cleaned = TangentSmoother.smooth(
-            cleaned, corners: corners, sigma: style.smoothingSigma, spacing: trace.spacing
-        )
+        let fitted = splineSettings(style: style, spacing: trace.spacing)
+        var cleaned = SplineSmoother.smooth(raw, corners: corners, settings: fitted)
         cleaned = ShapeSnapping.applyPerSegment(
             cleaned, corners: corners, tolerance: style.snapTolerance
         )
@@ -61,16 +54,23 @@ struct StrokeBeautifier {
         return points
     }
 
+    /// Einstellungen der Spline-Anpassung aus dem gelernten Profil.
+    func splineSettings(style: WritingStyle, spacing: Double) -> SplineSmoother.Settings {
+        var settings = SplineSmoother.Settings()
+        settings.knotSpacing = style.knotSpacing
+        settings.spacing = spacing
+        settings.bendingWeight = style.bendingWeight
+        return settings
+    }
+
     /// Die Live-Vorschau während des Schreibens.
     ///
-    /// Bewusst leichtgewichtig: keine Eckenanalyse, keine Formanpassung – nur
-    /// der gelernte Kern und die Breiten. Das Ergebnis ist die Linie, die der
-    /// Schreiber sieht, während er schreibt.
-    func preview(
-        _ inputs: [InkInput],
-        style: WritingStyle,
-        kernel: LearnedSmoothingKernel
-    ) -> [InkPoint] {
+    /// Bewusst leichtgewichtig: keine Eckenanalyse, keine Formanpassung, keine
+    /// Spline-Lösung (die kostet ein Gleichungssystem) – nur eine Gauß-Glättung
+    /// derselben Stärke und die Breiten. Das Ergebnis ist die Linie, die der
+    /// Schreiber sieht, während er schreibt; die Endform entsteht daraus per
+    /// Morph.
+    func preview(_ inputs: [InkInput], style: WritingStyle) -> [InkPoint] {
         guard inputs.count >= 2 else {
             return dot(inputs.first?.position, style: style, inputs: inputs)
         }
@@ -88,7 +88,10 @@ struct StrokeBeautifier {
             return dot(prepared.trace.points.first, style: style, inputs: inputs)
         }
 
-        let filtered = kernel.apply(trace.points, edge: .extrapolate)
+        let sigmaSamples = style.previewSigma / max(trace.spacing, 0.05)
+        let filtered = SignalFilters.gaussianSmooth(
+            trace.points, sigma: sigmaSamples, edge: .extrapolate
+        )
         var points: [InkPoint] = []
         points.reserveCapacity(trace.count)
         for i in 0..<trace.count {
@@ -277,31 +280,48 @@ struct StrokeBeautifier {
     }
 
     /// Neigung des Strichs an das gelernte Profil angleichen.
+    ///
+    /// Nur gerade, hohe Striche (Stämme) werden geneigt – an einem „o“ oder
+    /// einer Unterlänge ist „die Neigung“ bedeutungslos, und eine Drehung
+    /// würde dort die ganze Form kippen. Gearbeitet wird mit einer Scherung um
+    /// den Fußpunkt: Der Strich bleibt auf der Grundlinie stehen, nur seine
+    /// Spitze wandert.
     func applySlant(_ points: [InkPoint], style: WritingStyle) -> [InkPoint] {
-        guard points.count > 4, style.confidence > 0.05 else { return points }
+        guard points.count > 6, style.confidence >= 0.6 else { return points }
         guard let ownSlant = StrokeBeautifier.slant(of: points) else { return points }
-
-        var maxY = points[0].position.y
-        var sumX = 0.0
-        for point in points {
-            maxY = max(maxY, point.position.y)
-            sumX += point.position.x
-        }
+        guard StrokeBeautifier.isStraightAndTall(points) else { return points }
 
         let correction = InkMath.clamp(
             style.slant - ownSlant,
             -style.slantCorrectionLimit,
             style.slantCorrectionLimit
         )
-        guard abs(correction) > 0.002 else { return points }
+        guard abs(correction) > 0.004 else { return points }
 
-        let pivot = Vec2(sumX / Double(points.count), maxY)
+        var base = points[0].position.y
+        for point in points {
+            base = max(base, point.position.y)
+        }
+
         var result = points
         for i in 0..<result.count {
-            let offset = result[i].position - pivot
-            result[i].position = pivot + offset.rotated(by: correction)
+            result[i].position.x -= correction * (base - result[i].position.y)
         }
         return result
+    }
+
+    /// Ist der Strich gerade und hoch genug, dass eine Neigung Sinn ergibt?
+    static func isStraightAndTall(_ points: [InkPoint]) -> Bool {
+        guard points.count > 6 else { return false }
+        let positions = points.map { $0.position }
+        guard let fit = PrimitiveFitting.fitLine(positions) else { return false }
+        var minY = positions[0].y
+        var maxY = positions[0].y
+        for position in positions {
+            minY = min(minY, position.y)
+            maxY = max(maxY, position.y)
+        }
+        return (maxY - minY) > 12 && fit.rms < 0.6
     }
 
     // MARK: - Hilfen

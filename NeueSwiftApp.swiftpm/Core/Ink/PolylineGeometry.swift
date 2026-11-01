@@ -231,6 +231,32 @@ enum PolylineGeometry {
         return result
     }
 
+    /// Zerlegt die Reihe an den Ecken in Abschnitte.
+    ///
+    /// Der Eckpunkt selbst gehört zu beiden Abschnitten: So bleibt er beim
+    /// Glätten und beim Formanziehen in beiden Nachbarn verankert und wird
+    /// nicht weichgezogen.
+    static func segments(_ count: Int, corners: [Bool]) -> [Range<Int>] {
+        guard count >= 2 else { return [] }
+        var result: [Range<Int>] = []
+        var start = 0
+        if count > 2 {
+            for i in 1..<(count - 1) where i < corners.count && corners[i] {
+                if i > start {
+                    result.append(start..<(i + 1))
+                }
+                start = i
+            }
+        }
+        if count - 1 > start {
+            result.append(start..<count)
+        }
+        if result.isEmpty {
+            result.append(0..<count)
+        }
+        return result
+    }
+
     private static func value(_ values: [Double], _ index: Int) -> Double {
         guard index >= 0, index < values.count else { return values.last ?? 0 }
         return values[index]

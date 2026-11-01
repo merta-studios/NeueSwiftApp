@@ -16,7 +16,7 @@ enum ShapeSnapping {
     ) -> [Vec2] {
         guard points.count >= 4 else { return points }
         var result = points
-        for range in TangentSmoother.segments(points.count, corners: corners) {
+        for range in PolylineGeometry.segments(points.count, corners: corners) {
             guard range.count >= 4 else { continue }
             let slice = Array(points[range])
             let snapped = snap(slice, tolerance: tolerance)

@@ -28,14 +28,38 @@ struct WritingStyle: Equatable {
     /// Wie sicher das Profil ist (0 … 1). Am Anfang wird nur wenig korrigiert.
     var confidence: Double { InkMath.clamp(Double(strokeCount) / 10, 0, 1) }
 
-    /// Glättungsstärke in Seitenpunkten, abgeleitet aus dem gelernten Zittern.
-    var smoothingSigma: Double { InkMath.clamp(1.45 + 8.5 * tremor, 1.45, 4.4) }
+    /// Abstand der Stützstellen der Spline-Glättung in Seitenpunkten.
+    ///
+    /// Er folgt dem gelernten Zittern: Wer stark zittert, braucht weitere
+    /// Stützstellen, damit die Wellen zwischen ihnen verschwinden. Wer ruhig
+    /// schreibt, behält feine Formen – zu weite Stützstellen würden dort nur
+    /// Buchstaben verschleifen.
+    var knotSpacing: Double { InkMath.clamp(2.6 + 1.4 * tremor, 2.6, 3.4) }
+
+    /// Gewicht der Biegeenergie in der Spline-Anpassung.
+    ///
+    /// Kleiner Wert: die Kurve läuft enger an den Punkten, darf aber stärker
+    /// schwingen. In der Simulation war alles über 0.4 klar zu steif – enge
+    /// Bögen wurden dadurch zusammengezogen.
+    var bendingWeight: Double { 0.22 }
+
+    /// Weite der Live-Vorschau in Seitenpunkten.
+    ///
+    /// Die Vorschau zeigt eine Gauß-Glättung derselben Stärke. Sie muss die
+    /// Endform nicht exakt treffen, aber in der Morph-Animation darf die Linie
+    /// nicht springen – deshalb hängt sie am selben Stützstellenabstand.
+    var previewSigma: Double { knotSpacing / 2.2 }
 
     /// Wie stark Formen (Gerade, Kreis) nachgezogen werden.
     var snapTolerance: Double { InkMath.clamp(0.42 + 0.5 * tremor, 0.42, 0.8) }
 
     /// Wie weit die Neigung korrigiert werden darf (Radiant, gedeckelt).
-    var slantCorrectionLimit: Double { 0.055 * confidence }
+    ///
+    /// Absichtlich klein: Ein Strich wird um seinen Fußpunkt gedreht, ein
+    /// Fehler von 0.05 rad verschiebt die Spitze eines 34 Punkte hohen Stamms
+    /// schon um knapp zwei Punkte. In der Simulation war eine zu forsche
+    /// Neigungskorrektur der größte Fehlerbeitrag überhaupt.
+    var slantCorrectionLimit: Double { 0.03 * confidence }
 
     /// Strichbreite an einer Stelle.
     ///
