@@ -52,10 +52,8 @@ enum JunctionWelder {
         var best: (distance: Double, point: Vec2)?
         for stroke in neighbors {
             let positions = stroke.map { $0.position }
-            guard let candidate = PolylineGeometry.closestPointOnPolyline(
-                point, points: positions
-            ) else { continue }
-            guard candidate.distance <= radius else { continue }
+            let found = PolylineGeometry.closestPointOnPolyline(point, points: positions)
+            guard let candidate = found, candidate.distance <= radius else { continue }
             if best == nil || candidate.distance < best!.distance {
                 best = (candidate.distance, candidate.point)
             }

@@ -213,7 +213,7 @@ if let manifest {
 // MARK: - Hilfen für die Tests der Tinten-Engine
 
 /// Deterministischer Zufall (LCG) – Tests dürfen nicht von Zufall abhängen.
-private struct TestRandom {
+struct TestRandom {
     private var state: UInt64
 
     init(seed: UInt64) {

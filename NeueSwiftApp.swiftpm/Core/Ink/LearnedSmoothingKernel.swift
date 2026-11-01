@@ -96,10 +96,8 @@ struct LearnedSmoothingKernel: Equatable {
 
         guard rows.count > taps else { return }
         let ridge = 0.002 * Double(rows.count)
-        guard let solution = LinearAlgebra.leastSquares(
-            rows: rows, targets: targets, ridge: ridge
-        ) else { return }
-        guard solution.count == taps else { return }
+        let fit = LinearAlgebra.leastSquares(rows: rows, targets: targets, ridge: ridge)
+        guard let solution = fit, solution.count == taps else { return }
 
         var clamped = solution.map { InkMath.clamp($0, -0.8, 1.6) }
         var total = 0.0
