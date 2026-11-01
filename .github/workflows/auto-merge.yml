@@ -1,0 +1,159 @@
+name: Auto-Merge
+
+# Mergt geprüfte Pull Requests automatisch in den Default-Branch.
+#
+# Sicherheitsmodell (wichtig):
+#   • `pull_request_target` + Checkout des DEFAULT-Branch: hier wird nie Code
+#     aus dem Pull Request ausgeführt, nur das geprüfte Skript aus dem
+#     Default-Branch. Ein PR kann die Automatik daher nicht umschreiben.
+#   • Rechte nur so weit nötig (Inhalt lesen/schreiben für den Merge,
+#     Pull Requests für Kommentare, Actions zum Anstoßen der Folgeläufe).
+#   • Kein `--admin`, kein Force-Merge, keine Umgehung von Prüfungen.
+#   • `/automerge` als Kommentar löst nur eine erneute Auswertung aus.
+#
+# Die Entscheidungen stehen in ci/auto-merge.sh und sind dort testbar
+# (Tests/auto-merge.test.sh).
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+  push:
+    branches:
+      - 'arena/**'
+      - 'ai/**'
+      - 'agent/**'
+  workflow_run:
+    workflows:
+      - Swift-Code-Prüfung
+      - IPA-Build (unsigniert)
+    types: [completed]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Nummer des Pull Requests'
+        required: false
+        type: string
+      branch:
+        description: 'Head-Branch (wenn keine PR-Nummer angegeben ist)'
+        required: false
+        type: string
+      create:
+        description: 'Fehlenden Pull Request anlegen'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Nur auswerten, nichts schreiben'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.head_branch || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  auto-merge:
+    name: Auto-Merge (Prüfungen und Merge)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    # Kommentare zählen nur von vertrauenswürdigen Personen; Läufe auf dem
+    # Default-Branch (nach einem Merge) sind für die Automatik uninteressant.
+    if: >-
+      (github.event_name != 'issue_comment' ||
+        (github.event.issue.pull_request != null &&
+         contains(github.event.comment.body, '/automerge') &&
+         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))) &&
+      (github.event_name != 'workflow_run' ||
+        github.event.workflow_run.head_branch != github.event.repository.default_branch)
+    permissions:
+      contents: write       # Merge-Commit auf dem Default-Branch
+      pull-requests: write  # PR lesen/anlegen, Merge auslösen
+      issues: write         # Kommentare am PR laufen über die Issues-API
+      checks: read          # Check-Runs des geprüften Commits lesen
+      statuses: read        # alte Commit-Status lesen
+      actions: write        # Folgeläufe (Prüfung, IPA) anstoßen
+    steps:
+      - name: Skripte des Default-Branch auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 1
+
+      - name: Vorhandensein der Automatik prüfen
+        id: guard
+        run: |
+          set -euo pipefail
+          if [ ! -f ci/auto-merge.sh ]; then
+            echo "::notice::ci/auto-merge.sh liegt noch nicht auf dem Default-Branch. Automatik wird übersprungen."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          chmod +x ci/*.sh
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Auto-Merge auswerten
+        if: steps.guard.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          AUTOMERGE_BRANCHES: ${{ vars.AUTOMERGE_BRANCHES || 'arena/*,ai/*,agent/*' }}
+          AUTOMERGE_LABEL: ${{ vars.AUTOMERGE_LABEL || 'automerge' }}
+          AUTOMERGE_BLOCK_LABEL: ${{ vars.AUTOMERGE_BLOCK_LABEL || 'no-automerge' }}
+          AUTOMERGE_REQUIRED_CHECKS: ${{ vars.AUTOMERGE_REQUIRED_CHECKS || 'Syntax (alle Swift-Dateien),App-Logik (Typen und Tests),swift-format (Format),Skripte und Workflows (Lint und Tests),iOS-Build und Simulator-Smoke (Xcode)' }}
+          AUTOMERGE_PROTECTED_PATHS: ${{ vars.AUTOMERGE_PROTECTED_PATHS || '.github/,ci/,Tests/' }}
+          AUTOMERGE_TIMEOUT: ${{ vars.AUTOMERGE_TIMEOUT || '2700' }}
+          AUTOMERGE_POLL: ${{ vars.AUTOMERGE_POLL || '20' }}
+          AUTOMERGE_CANCEL_RETRIES: ${{ vars.AUTOMERGE_CANCEL_RETRIES || '2' }}
+          # Mit dem GITHUB_TOKEN erzeugte Merges lösen selbst keine Workflows
+          # aus. Deshalb werden die Folgeläufe auf dem Default-Branch
+          # ausdrücklich angestoßen – aber nur, wenn sie noch nicht laufen.
+          AUTOMERGE_DISPATCH_CHECK: ${{ vars.AUTOMERGE_DISPATCH_CHECK || '1' }}
+          AUTOMERGE_DISPATCH_BUILD: ${{ vars.AUTOMERGE_DISPATCH_BUILD || '1' }}
+          AUTOMERGE_CHECK_WORKFLOW: build-check.yml
+          AUTOMERGE_BUILD_WORKFLOW: build-ipa.yml
+          AUTOMERGE_CREATE_PR: ${{ (github.event_name == 'push' || inputs.create) && '1' || '0' }}
+          AUTOMERGE_DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+          # Ereigniswerte kommen über die Umgebung herein, nicht per Textersetzung
+          # in das Skript – so kann ein Branch-Name keinen Shell-Code einschleusen.
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PR: ${{ github.event.pull_request.number || github.event.issue.number || inputs.pr }}
+          EVENT_BRANCH: ${{ github.event.workflow_run.head_branch || inputs.branch || (github.event_name == 'push' && github.ref_name) || '' }}
+        run: |
+          set -euo pipefail
+          pr="${EVENT_PR:-}"
+          branch=""
+          if [ "${EVENT_NAME}" = "issue_comment" ]; then
+            echo "::notice::/automerge wertet den Pull Request erneut aus – Prüfungen werden nicht übersprungen."
+          elif [ -z "$pr" ]; then
+            branch="${EVENT_BRANCH:-}"
+          fi
+
+          if [ -n "$pr" ]; then
+            ci/auto-merge.sh --pr "$pr"
+          elif [ -n "$branch" ]; then
+            ci/auto-merge.sh --branch "$branch"
+          else
+            echo "Kein Pull Request und kein Branch im Ereignis – nichts zu tun."
+          fi
+
+      - name: Ergebnis zusammenfassen
+        if: always() && steps.guard.outputs.ready == 'true'
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          {
+            echo "### Auto-Merge"
+            echo
+            echo "- Ereignis: \`${EVENT_NAME}\`"
+            echo "- Ergebnis: \`${JOB_STATUS}\`"
+            echo "- Es gibt keinen Schalter, der Prüfungen überspringt. \`/automerge\` löst nur eine erneute Auswertung aus."
+            echo "- Änderungen an \`.github/\`, \`ci/\` und \`Tests/\` werden nie automatisch gemergt."
+          } >> "$GITHUB_STEP_SUMMARY"

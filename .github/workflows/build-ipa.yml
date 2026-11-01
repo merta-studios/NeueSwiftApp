@@ -1,0 +1,92 @@
+name: IPA-Build (unsigniert)
+
+# Baut aus dem Swift-Playgrounds-Paket ein unsigniertes .ipa und lädt es als
+# GitHub-Artefakt hoch. Läuft nach Merges auf dem Default-Branch und per
+# manuellem Start.
+#
+# Wichtig: Das Ergebnis ist NICHT installierbar, solange es nicht signiert
+# wurde (z. B. mit Sideloadly/AltStore und einer eigenen Apple-ID). Es werden
+# dafür keine Zertifikate, Profile oder Zugangsdaten in GitHub hinterlegt.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch oder Tag (leer = aktueller Branch)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-ipa-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ipa:
+    name: Unsignierte IPA bauen
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Xcode auswählen
+        env:
+          XCODE_APP: ${{ vars.XCODE_APP }}
+        run: ci/select-xcode.sh
+
+      - name: Unsignierte Release-App bauen und IPA paketieren
+        env:
+          APP_SCHEME: ${{ vars.APP_SCHEME }}
+        run: ci/build-ipa.sh
+
+      - name: IPA-Inhalt und Prüfsumme prüfen
+        run: |
+          set -euo pipefail
+          cd build
+          test -f NeueSwiftApp.ipa
+          unzip -l NeueSwiftApp.ipa | sed -n '1,20p'
+          # Genau ein App-Bundle unter Payload/, inklusive Info.plist.
+          count=$(unzip -Z1 NeueSwiftApp.ipa | grep -cE '^Payload/[^/]+\.app/Info\.plist$' || true)
+          if [ "$count" -ne 1 ]; then
+            echo "::error::IPA enthält $count App-Bundles mit Info.plist (erwartet: 1)"
+            exit 1
+          fi
+          shasum -a 256 NeueSwiftApp.ipa | tee NeueSwiftApp.ipa.sha256
+          {
+            echo "### Unsignierte IPA"
+            echo
+            echo "- Datei: \`NeueSwiftApp.ipa\`"
+            echo "- Commit: \`${GITHUB_SHA:0:8}\`"
+            echo "- SHA-256: \`$(cut -d' ' -f1 < NeueSwiftApp.ipa.sha256)\`"
+            echo "- Größe: $(ls -lh NeueSwiftApp.ipa | awk '{print $5}')"
+            echo
+            echo "**Vor der Installation mit einer eigenen Apple-ID signieren**"
+            echo "(z. B. Sideloadly, AltStore). Ohne Signatur lässt iOS die App nicht zu."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: IPA als Artefakt hochladen
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: NeueSwiftApp-unsignierte-IPA
+          path: |
+            build/NeueSwiftApp.ipa
+            build/NeueSwiftApp.ipa.sha256
+          if-no-files-found: error
+          retention-days: 60
+
+      - name: Build-Protokoll bei Fehlschlag hochladen
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: ipa-build-log
+          path: build/xcodebuild-*.log
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+#
+# Tests/stubs/gh – minimaler Ersatz für die GitHub-CLI in Tests.
+#
+# Liefert vorgegebene JSON-Dateien aus GH_STUB_DIR aus und protokolliert jeden
+# Aufruf in calls.log. So lassen sich die Entscheidungen von ci/auto-merge.sh
+# ohne Netz, ohne Token und ohne echte Merges prüfen.
+#
+# Dateien (alle optional, fehlende Datei = Fehler wie bei gh):
+#   repo.json  pr.json  pr2.json  labels.json  files.json  comments.json
+#   check-runs.json  status.json  runs.json  merge.json  create-pr.json
+# Steuerdateien:
+#   merge.rc (+ merge.err)          Rückgabewert/Fehlertext des Merges
+#   create-pr.rc (+ create-pr.err)  Rückgabewert des PR-Anlegens
+#   dispatch.rc                     Rückgabewert von workflow dispatch
+
+set -uo pipefail
+
+dir="${GH_STUB_DIR:-}"
+if [ -z "$dir" ] || [ ! -d "$dir" ]; then
+    echo "gh (Stub): GH_STUB_DIR fehlt" >&2
+    exit 99
+fi
+
+method="GET"
+endpoint=""
+fields=""
+seen_api=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        api)
+            seen_api=1
+            shift
+            ;;
+        -X | --method)
+            method="$2"
+            shift 2
+            ;;
+        --paginate | --silent)
+            shift
+            ;;
+        -f | -F | --field | --raw-field)
+            fields="$fields $2"
+            shift 2
+            ;;
+        -H | --header | -q | --jq | -t | --template)
+            shift 2
+            ;;
+        -*)
+            shift
+            ;;
+        *)
+            if [ "$seen_api" = "1" ] && [ -z "$endpoint" ]; then
+                endpoint="$1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [ -z "$endpoint" ]; then
+    echo "gh (Stub): kein Endpunkt erkannt" >&2
+    exit 99
+fi
+
+path="${endpoint%%\?*}"
+printf '%s %s %s\n' "$method" "$path" "$fields" >>"$dir/calls.log"
+
+emit() { # emit <dateiname>
+    if [ ! -f "$dir/$1" ]; then
+        echo "gh (Stub): $path nicht vorhanden ($1 fehlt)" >&2
+        exit 1
+    fi
+    cat "$dir/$1"
+    exit 0
+}
+
+field() { # field <name> – Wert aus den -f-Argumenten
+    local wanted="$1" token
+    for token in $fields; do
+        case "$token" in
+            "$wanted"=*) printf '%s' "${token#*=}" ; return 0 ;;
+        esac
+    done
+    return 1
+}
+
+case "$method $path" in
+    "GET repos/test/repo") emit repo.json ;;
+
+    "GET repos/test/repo/pulls")
+        emit pulls-search.json
+        ;;
+
+    "GET repos/test/repo/pulls/1" | "GET repos/test/repo/pulls/2")
+        reads_file="$dir/.pr-reads"
+        count=0
+        [ -f "$reads_file" ] && count="$(cat "$reads_file")"
+        count=$((count + 1))
+        printf '%s' "$count" >"$reads_file"
+        if [ "$count" -gt 1 ] && [ -f "$dir/pr2.json" ]; then
+            emit pr2.json
+        fi
+        emit pr.json
+        ;;
+
+    "GET repos/test/repo/issues/1/labels" | "GET repos/test/repo/issues/2/labels")
+        emit labels.json
+        ;;
+
+    "GET repos/test/repo/pulls/1/files" | "GET repos/test/repo/pulls/2/files")
+        emit files.json
+        ;;
+
+    "GET repos/test/repo/issues/1/comments" | "GET repos/test/repo/issues/2/comments")
+        emit comments.json
+        ;;
+
+    "POST repos/test/repo/issues/1/comments" | "POST repos/test/repo/issues/2/comments")
+        field body >>"$dir/posted-comments.txt"
+        printf '\n---\n' >>"$dir/posted-comments.txt"
+        printf '{"id":1}\n'
+        exit 0
+        ;;
+
+    "GET repos/test/repo/commits/arena/test")
+        emit commits.json
+        ;;
+
+    "GET repos/test/repo/commits/"*/check-runs)
+        emit check-runs.json
+        ;;
+
+    "GET repos/test/repo/commits/"*/status)
+        emit status.json
+        ;;
+
+    "GET repos/test/repo/actions/runs")
+        emit runs.json
+        ;;
+
+    "POST repos/test/repo/actions/workflows/"*"/dispatches")
+        rc=0
+        [ -f "$dir/dispatch.rc" ] && rc="$(cat "$dir/dispatch.rc")"
+        if [ "$rc" -ne 0 ]; then
+            echo "gh (Stub): dispatch abgelehnt" >&2
+            exit "$rc"
+        fi
+        printf '{"ok":true}\n'
+        exit 0
+        ;;
+
+    "POST repos/test/repo/pulls")
+        rc=0
+        [ -f "$dir/create-pr.rc" ] && rc="$(cat "$dir/create-pr.rc")"
+        if [ "$rc" -ne 0 ]; then
+            [ -f "$dir/create-pr.err" ] && cat "$dir/create-pr.err" >&2
+            exit "$rc"
+        fi
+        emit create-pr.json
+        ;;
+
+    "PUT repos/test/repo/pulls/1/merge" | "PUT repos/test/repo/pulls/2/merge")
+        rc=0
+        [ -f "$dir/merge.rc" ] && rc="$(cat "$dir/merge.rc")"
+        if [ "$rc" -ne 0 ]; then
+            [ -f "$dir/merge.err" ] && cat "$dir/merge.err" >&2
+            exit "$rc"
+        fi
+        if [ ! -f "$dir/merge.json" ]; then
+            if sha="$(field sha)"; then
+                printf '{"merged":true,"sha":"%s","message":"Pull Request successfully merged"}\n' "$sha"
+            else
+                printf '{"merged":true,"sha":"mergedsha000000000000000000000000000000","message":"ok"}\n'
+            fi
+            exit 0
+        fi
+        emit merge.json
+        ;;
+
+    *)
+        echo "gh (Stub): unerwarteter Aufruf '$method $path'" >&2
+        exit 90
+        ;;
+esac
