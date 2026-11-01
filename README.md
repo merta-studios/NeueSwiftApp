@@ -124,6 +124,14 @@ die Rauheit (mittlere zweite Differenz – das, was das Auge als „zittrig“ s
 | 0.45 | 0.290 → 0.271 (−6.6 %) | 0.051 → 0.039 (−24 %) |
 | 0.70 | 0.442 → 0.410 (−7.1 %) | 0.051 → 0.039 (−24 %) |
 
+![Idealform, roh geschriebene Linien, aufbereitete Fassung](docs/simulation.png)
+
+*Dieselben Striche dreimal: links die Vorgabe, in der Mitte so, wie ein
+schneller, zittriger Stift sie liefert (geglättete Vorschau), rechts das
+Ergebnis der Engine. Das Zittern (mittlere zweite Differenz) sinkt in diesem
+Beispiel von 0.051 auf 0.027, während der Abstand zur Idealform mit 0.34 → 0.37
+Punkten bei etwa 3 Punkten Strichbreite praktisch gleich bleibt.*
+
 Das ist der Kern des Versprechens: Die Rauheit sinkt um rund ein Viertel, ohne
 dass die Schrift dabei von der gewollten Form wegwandert. Zwei frühere Ansätze
 sind an genau dieser Tabelle gescheitert und wurden verworfen:
@@ -170,6 +178,7 @@ NeueSwiftApp.swiftpm/            Swift-Playgrounds-App-Paket
       StrokeBeautifier.swift     die Aufbereitungs-Pipeline
       InkEngine.swift            Engine: Vorschau, Abschluss, Lernen
   Assets.xcassets/               App-Icon (Platzhalter)
+docs/                            Bilder für diese Beschreibung
 ci/                              Prüf- und Automatisierungsskripte
 Tests/                           Logik-Tests und Tests der Auto-Merge-Logik
 .github/workflows/               GitHub Actions
