@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode & Swift Package Manager
+.build/
+*.xcodeproj
+xcuserdata/
+DerivedData/
+build/
+
+# Lokaler Zustand von Swift Playgrounds
+.swiftpm/configuration/
+
+# Artefakte der Prüfungen (nur in CI bzw. lokal erzeugt)
+.ci-summary.md
+.swift-check-summary.md
+*.ipa
+*.ipa.sha256
+smoke-screenshot.png
+
+# Editor
+.vscode/
+.idea/
+*.swp

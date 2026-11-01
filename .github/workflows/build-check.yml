@@ -1,0 +1,143 @@
+name: Swift-Code-Prüfung
+
+# Prüft Änderungen ohne Mac, so weit das ohne iOS-SDK möglich ist, und mit
+# einem echten Xcode-Build auf dem macOS-Runner.
+#
+# Alle fünf Jobs sind Pflichtprüfungen für den Auto-Merge:
+#   1. Syntax        – jede .swift-Datei wird geparst (auch SwiftUI/UIKit).
+#   2. App-Logik     – plattformunabhängiger Code: Typ-Prüfung + echte Tests.
+#   3. Format        – swift-format aus der Swift-Toolchain.
+#   4. Skripte       – Shell-/Workflow-Prüfung und Tests der Auto-Merge-Logik.
+#   5. iOS-Build     – Xcode-Build mit iOS-SDK, Simulator-Start als Smoke-Test.
+#
+# Bewusst ohne paths-ignore: fehlende Prüfungen gelten dem Auto-Merge nicht als
+# Erfolg, deshalb laufen sie immer vollständig.
+
+on:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+      - 'ai/**'
+      - 'agent/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: swift-check-${{ github.event.pull_request.head.ref || github.ref_name }}-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+
+env:
+  # Mehr Befunde auf einmal als Annotationen melden (GitHub begrenzt die
+  # Anzeige, das Protokoll enthält weiterhin alles).
+  CI_ANNOTATION_LIMIT: '50'
+  # Offizieller Swift-Container für alle Linux-Prüfungen. Überschreibbar per
+  # Repository-Variable SWIFT_IMAGE (z. B. swift:6.3-noble).
+  SWIFT_IMAGE: ${{ vars.SWIFT_IMAGE || 'swift:6.2-noble' }}
+
+jobs:
+  syntax:
+    name: Syntax (alle Swift-Dateien)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Swift-Version anzeigen
+        run: ci/run-swift.sh swift --version
+
+      - name: Alle .swift-Dateien parsen
+        run: ci/run-swift.sh ci/swift-check.sh parse
+
+  core-logic:
+    name: App-Logik (Typen und Tests)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Typ-Prüfung und Regressionstests der App-Logik
+        run: ci/run-swift.sh Tests/run-core-tests.sh
+
+  format:
+    name: swift-format (Format)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Format prüfen
+        run: ci/run-swift.sh ci/lint.sh
+
+  tooling:
+    name: Skripte und Workflows (Lint und Tests)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Shell-Skripte prüfen (bash -n, shellcheck)
+        env:
+          CI_REQUIRE_LINT_TOOLS: '1'
+        run: ci/check-shell.sh
+
+      - name: Workflows prüfen (SHA-Pinning, actionlint, YAML)
+        env:
+          CI_REQUIRE_LINT_TOOLS: '1'
+        run: ci/check-workflows.sh
+
+      - name: Auto-Merge-Entscheidungen testen
+        run: Tests/auto-merge.test.sh
+
+  ios-build:
+    name: iOS-Build und Simulator-Smoke (Xcode)
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Xcode auswählen
+        env:
+          XCODE_APP: ${{ vars.XCODE_APP }}
+        run: ci/select-xcode.sh
+
+      - name: Build, Installation und Start im Simulator
+        env:
+          APP_SCHEME: ${{ vars.APP_SCHEME }}
+        run: ci/ios-build-test.sh
+
+      - name: Screenshot des Smoke-Tests hochladen
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: ios-simulator-screenshot
+          path: build/smoke-screenshot.png
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Build-Protokoll bei Fehlschlag hochladen
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: ios-build-log
+          path: build/xcodebuild-*.log
+          if-no-files-found: warn
+          retention-days: 14
