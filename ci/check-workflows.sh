@@ -27,11 +27,13 @@ summary_file="${CI_SUMMARY_FILE:-}"
 actionlint_version="1.7.12"
 actionlint_sha256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
 
-log() { printf '\033[1m%s\033[0m\n' "$*"; }
-ok() { printf '  \033[32m✓\033[0m %s\n' "$*"; }
-note() { printf '  \033[34mi\033[0m %s\n' "$*"; }
-warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
-err() { printf '  \033[31m✗\033[0m %s\n' "$*"; }
+# Alle Meldungen gehen nach stderr: find_actionlint wird per
+# Kommando-Substitution aufgerufen, stdout darf nur den Pfad enthalten.
+log() { printf '\033[1m%s\033[0m\n' "$*" >&2; }
+ok() { printf '  \033[32m✓\033[0m %s\n' "$*" >&2; }
+note() { printf '  \033[34mi\033[0m %s\n' "$*" >&2; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$*" >&2; }
+err() { printf '  \033[31m✗\033[0m %s\n' "$*" >&2; }
 
 summary_append() {
     [ -n "$summary_file" ] || return 0

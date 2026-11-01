@@ -22,6 +22,9 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 2
 
+# shellcheck source=ci/lib.sh
+. ci/lib.sh
+
 compiler="${SWIFTC:-swiftc}"
 core_dir="NeueSwiftApp.swiftpm/Core"
 summary_file="${CI_SUMMARY_FILE:-}"
@@ -58,6 +61,7 @@ status=0
 for file in "${sources[@]}" "${tests[@]}"; do
     if [ ! -f "$file" ]; then
         err "Datei fehlt: $file"
+        ci_annotate error "$file" 1 1 "Datei fehlt (Tests/run-core-tests.sh)"
         status=1
     fi
 done
@@ -76,6 +80,7 @@ while IFS= read -r file; do
     done
     if [ "$found" -eq 0 ]; then
         err "$file steht nicht in der Dateiliste von Tests/run-core-tests.sh"
+        ci_annotate error "$file" 1 1 "Nicht in Tests/run-core-tests.sh eingetragen – neuer Code würde ungeprüft bleiben."
         missing=$((missing + 1))
     fi
 done < <(find "$core_dir" -name '*.swift' | sort)
@@ -95,6 +100,7 @@ while IFS= read -r file; do
             Foundation | Dispatch | FoundationEssentials | Glibc | Darwin) ;;
             *)
                 err "$file importiert '$module' – Core/ muss plattformunabhängig bleiben."
+                ci_annotate error "$file" 1 1 "Import '$module' ist in Core/ nicht plattformunabhängig."
                 portable_violations=$((portable_violations + 1))
                 ;;
         esac
@@ -110,8 +116,9 @@ ok "${#sources[@]} App-Datei(en) und ${#tests[@]} Testdatei(en) gefunden"
 
 # ------------------------------------------------------------- Typ-Prüfung
 
-if ! "$compiler" -typecheck "${sources[@]}" "${tests[@]}"; then
+if ! typecheck_output="$("$compiler" -typecheck "${sources[@]}" "${tests[@]}" 2>&1)"; then
     err "Typ-Prüfung fehlgeschlagen."
+    ci_report_swift_output "$typecheck_output"
     summary_append "- ❌ App-Logik: Typ-Prüfung fehlgeschlagen"
     exit 1
 fi
@@ -123,16 +130,34 @@ build_dir="$(mktemp -d "${TMPDIR:-/tmp}/neueswiftapp-core-tests.XXXXXX")"
 trap 'rm -rf "$build_dir"' EXIT
 
 binary="$build_dir/core-tests"
-if ! "$compiler" -O "${sources[@]}" "${tests[@]}" -o "$binary"; then
+if ! build_output="$("$compiler" -O "${sources[@]}" "${tests[@]}" -o "$binary" 2>&1)"; then
     err "Test-Binary ließ sich nicht bauen."
+    ci_report_swift_output "$build_output"
     summary_append "- ❌ App-Logik: Test-Binary nicht gebaut"
     exit 1
 fi
 
 # ------------------------------------------------------------------ Tests laufen
 
-if ! NEUESWIFT_ROOT="$PWD" "$binary"; then
+test_output="$(NEUESWIFT_ROOT="$PWD" "$binary" 2>&1)"
+test_rc=$?
+printf '%s\n' "$test_output" | sed 's/^/  /'
+
+if [ "$test_rc" -ne 0 ]; then
     err "Tests fehlgeschlagen."
+    while IFS= read -r line; do
+        [ -n "$line" ] || continue
+        case "$line" in
+            "  ✗ "*)
+                message="${line#  ✗ }"
+                file="${message%%:*}"
+                rest="${message#*:}"
+                lineno="${rest%%:*}"
+                ci_annotate error "$file" "${lineno:-1}" 1 "${rest#*:}"
+                ;;
+        esac
+    done <<<"$test_output"
+    ci_annotate error "Tests/CoreTests/main.swift" 1 1 "Ausgabe: $(printf '%s' "$test_output" | tail -n 5 | tr '\n' ' ')"
     summary_append "- ❌ App-Logik: Tests fehlgeschlagen"
     exit 1
 fi
