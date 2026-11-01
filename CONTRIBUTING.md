@@ -175,6 +175,10 @@ Pflichtprüfungen.
    prüfen, dass genau ein App-Bundle mit `Info.plist` in der IPA liegt.
 5. Als Artefakt `NeueSwiftApp-unsignierte-IPA` hochladen (60 Tage).
 
+Der Weg wurde einmal auf dem Pull Request geprüft (temporärer `pull_request`-
+Auslöser, danach wieder entfernt): Build, IPA-Paketierung, Prüfung des Inhalts
+(`Payload/NeueSwiftApp.app` mit `Info.plist`) und Artefakt-Upload waren grün.
+
 **Die IPA ist unsigniert** und muss vor der Installation signiert werden
 (z. B. Sideloadly/AltStore mit eigener Apple-ID). Das passiert bewusst
 außerhalb von GitHub – es werden keine Zertifikate, Profile oder

@@ -60,20 +60,33 @@ ci/build-ipa.sh             # unsignierte IPA nach build/NeueSwiftApp.ipa
 | Komponente | Wert | Nachweis |
 | --- | --- | --- |
 | Swift-Tools (Manifest) | `swift-tools-version: 5.9` (Minimum) | `Package.swift` |
-| Swift-Toolchain in CI | 6.2 (`swift:6.2-noble`) | Syntax-/Logik-Jobs in `build-check.yml` |
+| Swift-Toolchain der Linux-Jobs | 6.2 (`swift:6.2-noble`) | Syntax-, App-Logik- und Format-Job im CI-Lauf |
 | iOS-Mindestversion | 17.0 | `Package.swift`, `AppMetadata.minimumIOSVersion` |
-| Xcode | neueste stabile Version auf dem Runner `macos-26` (aktuell 26.6), per Repo-Variable `XCODE_APP` festlegbar | `ci/select-xcode.sh` |
-| iPadOS / Swift Playgrounds | **nicht verifiziert** | siehe unten |
+| Xcode in CI | **26.6**, iOS-SDK **26.5**, Simulator-Laufzeit **iOS 26.2** | Annotation „macOS-Buildumgebung“ des iOS-Jobs; festlegbar per Repo-Variable `XCODE_APP` |
+| Runner | `macos-26` (iOS-Build, IPA), `ubuntu-24.04` (Linux-Prüfungen) | Workflow-Dateien |
+| iPadOS / Swift Playgrounds | **nicht verifiziert** | – |
 
-**Nicht getestet:** Dieser Stand wurde nicht auf einem iPad, nicht in Swift
-Playgrounds und nicht auf einem Mac ausgeführt. Die Linux-Prüfungen und der
-macOS-Build in GitHub Actions belegen Syntax, Logik und einen echten
-iOS-Build – **nicht** das Verhalten in Swift Playgrounds oder auf echter
-Hardware. Das Paket ist ein normales Swift-Playgrounds-App-Paket (gleiche
-Struktur wie das Referenzprojekt) und nutzt nur Standard-APIs; ob es auf dem
-iPad mit der dort installierten Swift-Playgrounds-Version (mindestens iPadOS 17
-wegen des Deployment-Targets) geöffnet und ausgeführt werden kann, muss dort
-einmal geprüft werden.
+Das Paket hat das Deployment-Target iOS 17 und braucht auf dem iPad daher
+iPadOS ≥ 17 sowie eine Swift-Playgrounds-Version, die iOS-17-App-Pakete
+unterstützt. Ob es dort tatsächlich geöffnet, bearbeitet und ausgeführt werden
+kann, ist **nicht getestet** – dafür ist ein echtes iPad nötig.
+
+## Was tatsächlich geprüft wurde
+
+Stand dieses Branches, alle Jobs des Workflows „Swift-Code-Prüfung“ grün:
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `Syntax (alle Swift-Dateien)` | ✅ alle `.swift`-Dateien geparst (Swift 6.2 im Container) |
+| `App-Logik (Typen und Tests)` | ✅ echte Typ-Prüfung, 87 Testprüfungen bestanden |
+| `swift-format (Format)` | ✅ keine Abweichung von `.swift-format` |
+| `Skripte und Workflows (Lint und Tests)` | ✅ 14 Shell-Skripte (shellcheck), Workflows (SHA-Pinning, actionlint 1.7.12, YAML), 30 Auto-Merge-Szenarien |
+| `iOS-Build und Simulator-Smoke (Xcode)` | ✅ Build mit iOS-SDK, Installation und Start im Simulator, Screenshot als Artefakt |
+| `IPA-Build (unsigniert)` | ✅ in einem einmaligen Testlauf auf dem PR: `Payload/NeueSwiftApp.app`, Artefakt `NeueSwiftApp-unsignierte-IPA` (~60 KB) |
+
+**Nicht geprüft:** Swift Playgrounds auf dem iPad, echtes Gerät, Signierung,
+App-Store-Upload. Ein Linux-Syntaxcheck und ein erfolgreicher CI-Build ersetzen
+keinen Test auf echter Hardware.
 
 ## Auto-Merge in Kurzform
 

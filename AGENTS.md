@@ -112,6 +112,22 @@ Lauf existiert (`actions/runs?head_sha=…`), damit nichts doppelt läuft.
 * **Fork-PRs:** werden nie automatisch gemergt.
 * **Swift Playgrounds / iPad:** wird hier nicht getestet.
 
+## Stand des Nachweises (Stand: dieses Repository, erster Einrichtungslauf)
+
+Grün gelaufen: Syntax, App-Logik (87 Prüfungen), swift-format,
+Skripte/Workflows (actionlint 1.7.12, shellcheck, 30 Auto-Merge-Szenarien) und
+der iOS-Build mit Simulator-Start auf Xcode 26.6 (iOS-SDK 26.5, Simulator
+iOS 26.2). Der IPA-Build wurde in einem einmaligen Testlauf auf dem PR geprüft
+(Artefakt `NeueSwiftApp-unsignierte-IPA`); sein regulärer Auslöser ist der
+Merge auf `main`.
+
+Nicht gelaufen und daher unbekannt: Swift Playgrounds auf dem iPad, echtes
+Gerät, Signierung der IPA.
+
+Der Auto-Merge-Job ist in dieser Phase grün, aber untätig: Er checkt den
+Default-Branch aus, und dort liegt `ci/auto-merge.sh` erst nach dem ersten
+Merge. Seine Annotation sagt genau das.
+
 ## Wenn GitHub Actions nicht startet
 
 Symptom: Lauf nach Sekunden rot, alle Jobs mit 0 Schritten, Annotation
