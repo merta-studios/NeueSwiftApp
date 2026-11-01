@@ -52,27 +52,48 @@ ci_annotate() { # ci_annotate <error|warning|notice> <datei> <zeile> <spalte> <t
         "$(ci_escape_data "$message")"
 }
 
-# Zerlegt die Ausgabe von swiftc/swift-format in Einzelmeldungen und gibt sie
-# zusätzlich als Annotation aus. Format:
+# Zerlegt die Ausgabe von swiftc/swift-format/actionlint/shellcheck in
+# Einzelmeldungen und gibt sie zusätzlich als Annotation aus. Format:
 #   <datei>:<zeile>:<spalte>: <error|warning|note>: <meldung>
-ci_report_swift_output() { # ci_report_swift_output <ausgabe> [standardstufe]
+ci_report_diagnostics() { # ci_report_diagnostics <ausgabe> [standardstufe]
     local output="$1" default_level="${2:-error}"
-    local line file lineno column level message
+    local line file lineno column level message match
     while IFS= read -r line; do
         [ -n "$line" ] || continue
-        if [[ "$line" =~ ^(.*\.swift):([0-9]+):([0-9]+):\ (error|warning|note):\ (.*)$ ]]; then
+        match=0
+        if [[ "$line" =~ ^(.+):([0-9]+):([0-9]+):\ (error|warning|note|Error|Warning|Notice):\ (.*)$ ]]; then
+            match=1
+        elif [[ "$line" =~ ^(.+):([0-9]+):([0-9]+):\ (.*)$ ]]; then
+            # z. B. actionlint: datei:zeile:spalte: meldung [rule]
+            column=0
+            level="$default_level"
+            message="${BASH_REMATCH[4]}"
+            file="${BASH_REMATCH[1]}"
+            lineno="${BASH_REMATCH[2]}"
+            match=2
+        fi
+        if [ "$match" -eq 1 ]; then
             file="${BASH_REMATCH[1]}"
             lineno="${BASH_REMATCH[2]}"
             column="${BASH_REMATCH[3]}"
             level="${BASH_REMATCH[4]}"
             message="${BASH_REMATCH[5]}"
             [ "$level" = "note" ] && level="notice"
+            [ "$level" = "Error" ] && level="error"
+            [ "$level" = "Warning" ] && level="warning"
             printf '%s\n' "$line"
             ci_annotate "$level" "$file" "$lineno" "$column" "$message"
+        elif [ "$match" -eq 2 ]; then
+            printf '%s\n' "$line"
+            ci_annotate "$default_level" "$file" "$lineno" 1 "$message"
         else
             printf '%s\n' "$line"
             # Zeilen ohne Positionsangabe trotzdem sichtbar machen.
-            ci_annotate "$default_level" "$(basename "${0}")" 1 1 "$line"
+            ci_annotate "$default_level" "ci" 1 1 "$line"
         fi
     done <<<"$output"
+}
+
+ci_report_swift_output() { # Rückwärtskompatibler Name
+    ci_report_diagnostics "$@"
 }

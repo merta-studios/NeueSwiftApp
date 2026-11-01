@@ -23,6 +23,9 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 2
 
+# shellcheck source=ci/lib.sh
+. ci/lib.sh
+
 summary_file="${CI_SUMMARY_FILE:-}"
 actionlint_version="1.7.12"
 actionlint_sha256="8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
@@ -73,6 +76,7 @@ for file in "${workflows[@]}"; do
         pin_count=$((pin_count + 1))
         if ! printf '%s' "$reference" | grep -qE '@[0-9a-f]{40}$'; then
             err "$file: '$reference' ist nicht auf einen Commit-SHA festgelegt"
+            ci_annotate error "$file" 1 1 "'$reference' ist nicht auf einen Commit-SHA festgelegt"
             pinning_errors=$((pinning_errors + 1))
         fi
         if ! printf '%s' "$line" | grep -qE '#[[:space:]]*v?[0-9]'; then
@@ -139,11 +143,14 @@ log "actionlint"
 actionlint="$(find_actionlint || true)"
 if [ -n "$actionlint" ] && [ -x "$actionlint" ]; then
     note "Version: $("$actionlint" --version 2>&1 | head -n 1)"
-    if "$actionlint" -color "${workflows[@]}"; then
+    actionlint_output="$("$actionlint" -color "${workflows[@]}" 2>&1)"
+    if [ $? -eq 0 ] && [ -z "$actionlint_output" ]; then
         ok "actionlint ohne Befund"
         summary_append "- ✅ Workflows: actionlint ohne Befund"
     else
         err "actionlint hat Befunde gemeldet."
+        printf '%s\n' "$actionlint_output" | sed 's/^/    /'
+        ci_report_diagnostics "$actionlint_output" error
         summary_append "- ❌ Workflows: actionlint-Befunde"
         status=1
     fi

@@ -21,6 +21,9 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || exit 2
 
+# shellcheck source=ci/lib.sh
+. ci/lib.sh
+
 severity="${SHELLCHECK_SEVERITY:-warning}"
 summary_file="${CI_SUMMARY_FILE:-}"
 
@@ -70,10 +73,13 @@ if command -v shellcheck >/dev/null 2>&1; then
     echo
     note_version="$(shellcheck --version | sed -nE 's/^version: (.*)$/\1/p')"
     log "shellcheck $note_version (Mindestschwere: $severity)"
-    if shellcheck --severity="$severity" --external-sources "${scripts[@]}"; then
+    shellcheck_output="$(shellcheck --severity="$severity" --external-sources "${scripts[@]}" 2>&1)"
+    if [ $? -eq 0 ] && [ -z "$shellcheck_output" ]; then
         ok "shellcheck ohne Befund"
         summary_append "- ✅ Shell: ${#scripts[@]} Skript(e), shellcheck ohne Befund"
     else
+        printf '%s\n' "$shellcheck_output" | head -n 60
+        ci_report_diagnostics "$shellcheck_output" warning
         err "shellcheck hat Befunde gemeldet (siehe oben)."
         summary_append "- ❌ Shell: shellcheck-Befunde"
         status=1

@@ -37,18 +37,24 @@ if ! command -v jq >/dev/null 2>&1; then
     exit 1
 fi
 
+# shellcheck source=ci/lib.sh
+. ci/lib.sh
+
 cases=0
 failures=0
 case_name=""
 case_output=""
 case_rc=0
+case_failures=0
 
 green_sha="1111111111111111111111111111111111111111"
 other_sha="2222222222222222222222222222222222222222"
 
 fail() {
     failures=$((failures + 1))
+    case_failures=$((case_failures + 1))
     printf '  \033[31m✗\033[0m %s\n' "$*"
+    ci_annotate error "Tests/auto-merge.test.sh" 1 1 "$case_name: $*"
 }
 
 pass() {
@@ -57,7 +63,17 @@ pass() {
 
 # --------------------------------------------------------------- Testaufbau
 
+flush_case() {
+    # Fehlgeschlagene Szenarien mit Ausgabe als Annotation sichtbar machen.
+    if [ "${case_failures:-0}" -gt 0 ]; then
+        ci_annotate error "ci/auto-merge.sh" 1 1 \
+            "Szenario '$case_name' – Ausgabe:\n$(printf '%s' "$case_output" | tail -n 25)"
+    fi
+    case_failures=0
+}
+
 scenario() { # scenario <name>
+    flush_case
     cases=$((cases + 1))
     case_name="$1"
     printf '\n\033[1m%s\033[0m\n' "$case_name"
@@ -487,6 +503,8 @@ else
 fi
 
 # ------------------------------------------------------------------- Ergebnis
+
+flush_case
 
 printf '\n'
 if [ "$failures" -eq 0 ]; then
