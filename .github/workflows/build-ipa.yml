@@ -60,13 +60,15 @@ jobs:
             exit 1
           fi
           shasum -a 256 NeueSwiftApp.ipa | tee NeueSwiftApp.ipa.sha256
+          size_bytes=$(wc -c < NeueSwiftApp.ipa)
+          size_kib=$((size_bytes / 1024))
           {
             echo "### Unsignierte IPA"
             echo
             echo "- Datei: \`NeueSwiftApp.ipa\`"
             echo "- Commit: \`${GITHUB_SHA:0:8}\`"
             echo "- SHA-256: \`$(cut -d' ' -f1 < NeueSwiftApp.ipa.sha256)\`"
-            echo "- Größe: $(ls -lh NeueSwiftApp.ipa | awk '{print $5}')"
+            echo "- Größe: ${size_kib} KiB"
             echo
             echo "**Vor der Installation mit einer eigenen Apple-ID signieren**"
             echo "(z. B. Sideloadly, AltStore). Ohne Signatur lässt iOS die App nicht zu."

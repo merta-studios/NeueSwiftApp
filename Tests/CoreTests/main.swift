@@ -13,7 +13,7 @@ private var failures: [String] = []
 private func expect(
     _ condition: @autoclosure () -> Bool,
     _ message: String,
-    file: StaticString = #file,
+    file: String = #filePath,
     line: UInt = #line
 ) {
     checks += 1
@@ -26,7 +26,7 @@ private func expectEqual<T: Equatable>(
     _ actual: T,
     _ expected: T,
     _ message: String,
-    file: StaticString = #file,
+    file: String = #filePath,
     line: UInt = #line
 ) {
     checks += 1
@@ -41,7 +41,7 @@ private func expectEqual<T: Equatable>(
 private func expectNil<T>(
     _ actual: T?,
     _ message: String,
-    file: StaticString = #file,
+    file: String = #filePath,
     line: UInt = #line
 ) {
     checks += 1

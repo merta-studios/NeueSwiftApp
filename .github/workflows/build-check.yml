@@ -31,6 +31,9 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Mehr Befunde auf einmal als Annotationen melden (GitHub begrenzt die
+  # Anzeige, das Protokoll enthält weiterhin alles).
+  CI_ANNOTATION_LIMIT: '50'
   # Offizieller Swift-Container für alle Linux-Prüfungen. Überschreibbar per
   # Repository-Variable SWIFT_IMAGE (z. B. swift:6.3-noble).
   SWIFT_IMAGE: ${{ vars.SWIFT_IMAGE || 'swift:6.2-noble' }}

@@ -28,13 +28,13 @@ let package = Package(
             accentColor: .presetColor(.blue),
             supportedDeviceFamilies: [
                 .pad,
-                .phone
+                .phone,
             ],
             supportedInterfaceOrientations: [
                 .portrait,
                 .landscapeLeft,
                 .landscapeRight,
-                .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+                .portraitUpsideDown(.when(deviceFamilies: [.pad])),
             ]
         )
     ],
