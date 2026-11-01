@@ -10,9 +10,9 @@
 # benutzt. Kein iOS-SDK nötig, aber auch keine Ausrede: ein Compilerfehler ist
 # hier ein Fehlschlag.
 #
-# Die Dateiliste ist bewusst explizit: nur so ist garantiert, dass nichts
-# iOS-Abhängiges mitgezogen wird. Damit die Liste nicht veraltet, schlägt das
-# Skript fehl, sobald in Core/ eine Swift-Datei liegt, die nicht aufgeführt ist.
+# Geprüft wird jede Swift-Datei unter Core/ (auch in Unterordnern) samt der
+# Testdatei. Eine neue Datei in Core/ ist damit automatisch Teil der Prüfung –
+# es gibt keine Liste, die veralten könnte.
 #
 # Umgebungsvariablen:
 #   SWIFTC           Compiler (Standard: swiftc)
@@ -29,10 +29,8 @@ compiler="${SWIFTC:-swiftc}"
 core_dir="NeueSwiftApp.swiftpm/Core"
 summary_file="${CI_SUMMARY_FILE:-}"
 
-sources=(
-    "$core_dir/AppMetadata.swift"
-    "$core_dir/SemanticVersion.swift"
-)
+mapfile -t sources < <(find "$core_dir" -name '*.swift' | sort)
+
 tests=(
     "Tests/CoreTests/main.swift"
 )
@@ -67,27 +65,6 @@ for file in "${sources[@]}" "${tests[@]}"; do
 done
 if [ "$status" -ne 0 ]; then
     summary_append "- ❌ App-Logik: gepflegte Dateiliste passt nicht zum Repository"
-    exit 1
-fi
-
-# Core/ muss vollständig in der Liste stehen – sonst würde neuer Code
-# ungeprüft bleiben.
-missing=0
-while IFS= read -r file; do
-    found=0
-    for listed in "${sources[@]}"; do
-        [ "$listed" = "$file" ] && found=1
-    done
-    if [ "$found" -eq 0 ]; then
-        err "$file steht nicht in der Dateiliste von Tests/run-core-tests.sh"
-        ci_annotate error "$file" 1 1 "Nicht in Tests/run-core-tests.sh eingetragen – neuer Code würde ungeprüft bleiben."
-        missing=$((missing + 1))
-    fi
-done < <(find "$core_dir" -name '*.swift' | sort)
-
-if [ "$missing" -gt 0 ]; then
-    note "Neue Datei in $core_dir? Dann dort ergänzen und erneut prüfen."
-    summary_append "- ❌ App-Logik: $missing Datei(en) in Core/ nicht abgedeckt"
     exit 1
 fi
 
