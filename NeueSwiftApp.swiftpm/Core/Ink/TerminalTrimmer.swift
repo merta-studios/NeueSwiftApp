@@ -60,7 +60,9 @@ enum TerminalTrimmer {
     ) -> [InkPoint] {
         let count = points.count
         guard count > 6 else { return points }
-        let head = points[0].position - points[1].position
+        // Beide Richtungen zeigen in Schreibrichtung; ein Überschwinger am
+        // Anfang läuft genau entgegengesetzt.
+        let head = points[1].position - points[0].position
         let main = points[3].position - points[2].position
         guard head.length > 1e-6, main.length > 1e-6 else { return points }
         guard head.length <= maxHookLength else { return points }

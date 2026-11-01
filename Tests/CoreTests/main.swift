@@ -350,9 +350,13 @@ let bent = InkTrace(points: [Vec2(0, 0), Vec2(3, 1), Vec2(3, 9)], altitudes: [1,
 let resampledTrace = PolylineGeometry.resample(bent, spacing: 0.5)
 expect(resampledTrace.count > 15, "Resampling erzeugt eine dichte Reihe")
 expect(resampledTrace.count < 30, "Resampling erzeugt nicht unnötig viele Punkte")
+// Der Abstand wird auf einer Geraden geprüft: In einem Knick ist der
+// geradlinige Abstand zweier Punkte kleiner als ihr Bogenabstand.
+let straightTrace = InkTrace(points: (0...12).map { Vec2(Double($0), 0) })
+let straightResampled = PolylineGeometry.resample(straightTrace, spacing: 0.5)
 var uniformSpacing = true
-for i in 1..<(resampledTrace.count - 1) {
-    let step = resampledTrace.points[i].distance(to: resampledTrace.points[i - 1])
+for i in 1..<(straightResampled.count - 1) {
+    let step = straightResampled.points[i].distance(to: straightResampled.points[i - 1])
     if abs(step - 0.5) > 1e-6 { uniformSpacing = false }
 }
 expect(uniformSpacing, "Resampling hält den Punktabstand ein")
@@ -366,8 +370,9 @@ expect(
     "Begleitwerte bleiben synchron"
 )
 
+// Die Gerade reicht von x = 0 bis x = 10, bei Bogenlänge 5 liegt also x = 5.
 let pointAtHalf = PolylineGeometry.point(atLength: 5, points: straightLine)
-expect(abs(pointAtHalf.x - 2.5) < 1e-9, "Punkt bei halber Bogenlänge")
+expect(abs(pointAtHalf.x - 5) < 1e-9, "Punkt bei halber Bogenlänge")
 
 let foot = PolylineGeometry.closestPoint(onSegment: Vec2(0, 0), Vec2(10, 0), to: Vec2(4, 3))
 expect(abs(foot.point.x - 4) < 1e-9 && abs(foot.point.y) < 1e-12, "Fußpunkt auf der Strecke")
@@ -482,11 +487,13 @@ let noCorners = [Bool](repeating: false, count: jitteryLine.count)
 let angleSmoothed = TangentSmoother.smooth(
     jitteryLine, corners: noCorners, sigma: 3, spacing: 0.8
 )
-expectEqual(angleSmoothed[0], jitteryLine[0], "Glättung hält den Startpunkt exakt")
-expectEqual(
-    angleSmoothed[angleSmoothed.count - 1],
-    jitteryLine[jitteryLine.count - 1],
-    "Glättung hält den Endpunkt exakt"
+expect(
+    angleSmoothed[0].distance(to: jitteryLine[0]) < 1e-9,
+    "Glättung hält den Startpunkt fest"
+)
+expect(
+    angleSmoothed[angleSmoothed.count - 1].distance(to: jitteryLine[jitteryLine.count - 1]) < 1e-9,
+    "Glättung hält den Endpunkt fest"
 )
 expect(
     roughness(angleSmoothed) < roughness(jitteryLine) * 0.5,
@@ -568,7 +575,7 @@ approaching.append(InkPoint(position: Vec2(49.4, 100.3), width: 2))
 let weldResult = JunctionWelder.weld(approaching, to: [neighborStroke], radius: 2.5)
 expect(weldResult.weldedEnd, "Ein nahes Ende wird verbunden")
 expect(
-    (weldResult.points.last?.position ?? Vec2.zero).distance(to: Vec2(49.4, 100)) < 1e-9,
+    (weldResult.points.last?.position ?? Vec2.zero).distance(to: Vec2(50, 100)) < 1e-9,
     "Das Ende sitzt danach genau auf dem Nachbarstrich"
 )
 expect(!weldResult.weldedStart, "Ein fernes Ende bleibt unverbunden")

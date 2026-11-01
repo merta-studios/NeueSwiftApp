@@ -84,9 +84,10 @@ final class InkStrokeStore {
         for stroke in strokes {
             combinedPoints.append(contentsOf: stroke)
         }
-        var updated: [Entry] = [Entry(
+        let mergedEntry = Entry(
             points: combinedPoints, layer: merged.layer, path: merged.path
-        )]
+        )
+        var updated: [Entry] = [mergedEntry]
         updated.append(contentsOf: entries.dropFirst(count))
         entries = updated
     }
