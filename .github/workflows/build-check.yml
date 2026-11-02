@@ -47,7 +47,7 @@ jobs:
 
   format-fix:
     name: Format-Fix (manuell)
-    if: github.event_name == 'workflow_dispatch' && inputs.fix_format
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/')
     runs-on: ubuntu-24.04
     permissions:
       contents: write
