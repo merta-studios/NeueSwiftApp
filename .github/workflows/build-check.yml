@@ -22,6 +22,11 @@ on:
       - 'agent/**'
   pull_request:
   workflow_dispatch:
+    inputs:
+      fix_format:
+        description: "swift-format anwenden und auf den Branch zurückschreiben"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -39,6 +44,27 @@ env:
   SWIFT_IMAGE: ${{ vars.SWIFT_IMAGE || 'swift:6.2-noble' }}
 
 jobs:
+
+  format-fix:
+    name: Format-Fix (manuell)
+    if: github.event_name == 'workflow_dispatch' && inputs.fix_format
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Formatieren
+        run: ci/run-swift.sh ci/lint.sh --fix
+      - name: Änderungen zurückschreiben
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "style: swift-format"
+          git push origin HEAD:${{ github.ref_name }}
   syntax:
     name: Syntax (alle Swift-Dateien)
     runs-on: ubuntu-24.04
