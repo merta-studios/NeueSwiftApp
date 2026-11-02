@@ -3,8 +3,8 @@ import Foundation
 import Vision
 
 /// A recognized word with per-character boxes in page coordinates.
-struct RecognizedWord {
-    struct Glyph {
+struct RecognizedWord: Sendable {
+    struct Glyph: Sendable {
         var character: Character
         var bounds: InkBounds
     }
@@ -17,7 +17,7 @@ struct RecognizedWord {
 /// On-device handwriting recognition. Vision reads the ink; Apple Intelligence
 /// (when available) disambiguates between Vision's own candidates. It never
 /// invents replacement prose, so names, numbers and intent stay under control.
-final class HandwritingRecognition {
+struct HandwritingRecognition: Sendable {
     enum Failure: Error { case noText }
 
     private struct Candidate: Sendable {
@@ -33,42 +33,10 @@ final class HandwritingRecognition {
 
     func recognize(image: CGImage, crop: CGRect) async throws -> [RecognizedWord] {
         try Task.checkCancellation()
+        // Keep the detached closure tiny: Swift 6's region-based isolation
+        // checker rejects the older inline Vision pipeline on some SDKs.
         let candidates = try await Task.detached(priority: .userInitiated) {
-            let request = VNRecognizeTextRequest()
-            request.recognitionLevel = .accurate
-            request.revision = VNRecognizeTextRequestRevision3
-            request.usesLanguageCorrection = true
-            let preferred = ["de-DE", "en-US"]
-            let supported = (try? request.supportedRecognitionLanguages()) ?? []
-            request.recognitionLanguages = preferred.filter { supported.contains($0) }
-            if request.recognitionLanguages.isEmpty {
-                request.recognitionLanguages = Array(supported.prefix(2))
-            }
-            let handler = VNImageRequestHandler(cgImage: image, options: [:])
-            try handler.perform([request])
-            return (request.results ?? []).map { observation -> [Candidate] in
-                observation.topCandidates(3).compactMap { recognized -> Candidate? in
-                    guard recognized.confidence >= 0.55 else { return nil }
-                    var glyphs: [Candidate.Glyph] = []
-                    let text = recognized.string
-                    for index in text.indices {
-                        let next = text.index(after: index)
-                        if let box = try? recognized.boundingBox(for: index..<next) {
-                            glyphs.append(
-                                Candidate.Glyph(
-                                    character: text[index],
-                                    bounds: Self.pageBounds(box.boundingBox, crop: crop)
-                                )
-                            )
-                        }
-                    }
-                    return Candidate(
-                        text: text, confidence: Double(recognized.confidence),
-                        bounds: Self.pageBounds(observation.boundingBox, crop: crop),
-                        glyphs: glyphs
-                    )
-                }
-            }
+            try Self.performVision(image: image, crop: crop)
         }.value
         try Task.checkCancellation()
         let groups = candidates.filter { !$0.isEmpty }
@@ -92,6 +60,44 @@ final class HandwritingRecognition {
             )
         }
         return words.sorted { $0.bounds.minX < $1.bounds.minX }
+    }
+
+    private static func performVision(image: CGImage, crop: CGRect) throws -> [[Candidate]] {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.revision = VNRecognizeTextRequestRevision3
+        request.usesLanguageCorrection = true
+        let preferred = ["de-DE", "en-US"]
+        let supported = (try? request.supportedRecognitionLanguages()) ?? []
+        request.recognitionLanguages = preferred.filter { supported.contains($0) }
+        if request.recognitionLanguages.isEmpty {
+            request.recognitionLanguages = Array(supported.prefix(2))
+        }
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        try handler.perform([request])
+        return (request.results ?? []).map { observation -> [Candidate] in
+            observation.topCandidates(3).compactMap { recognized -> Candidate? in
+                guard recognized.confidence >= 0.55 else { return nil }
+                var glyphs: [Candidate.Glyph] = []
+                let text = recognized.string
+                for index in text.indices {
+                    let next = text.index(after: index)
+                    if let box = try? recognized.boundingBox(for: index..<next) {
+                        glyphs.append(
+                            Candidate.Glyph(
+                                character: text[index],
+                                bounds: pageBounds(box.boundingBox, crop: crop)
+                            )
+                        )
+                    }
+                }
+                return Candidate(
+                    text: text, confidence: Double(recognized.confidence),
+                    bounds: pageBounds(observation.boundingBox, crop: crop),
+                    glyphs: glyphs
+                )
+            }
+        }
     }
 
     /// Vision uses a bottom-left origin; the canvas uses top-left page coordinates.
