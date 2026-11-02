@@ -22,11 +22,6 @@ on:
       - 'agent/**'
   pull_request:
   workflow_dispatch:
-    inputs:
-      fix_format:
-        description: "swift-format anwenden und auf den Branch zurückschreiben"
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -45,26 +40,6 @@ env:
 
 jobs:
 
-  format-fix:
-    name: Format-Fix (manuell)
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/')
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - name: Repository auschecken
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          ref: ${{ github.ref_name }}
-      - name: Formatieren
-        run: ci/run-swift.sh ci/lint.sh --fix
-      - name: Änderungen zurückschreiben
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --quiet || git commit -m "style: swift-format"
-          git push origin HEAD:${{ github.ref_name }}
   syntax:
     name: Syntax (alle Swift-Dateien)
     runs-on: ubuntu-24.04
@@ -149,6 +124,16 @@ jobs:
         env:
           APP_SCHEME: ${{ vars.APP_SCHEME }}
         run: ci/ios-build-test.sh
+
+      - name: Compiler-Fehler als Annotationen melden
+        if: failure()
+        run: |
+          shopt -s nullglob
+          for log in build/xcodebuild-*.log; do
+            grep -E 'error:' "$log" | head -20 | while IFS= read -r line; do
+              printf '::error::%s\n' "$line"
+            done
+          done
 
       - name: Screenshot des Smoke-Tests hochladen
         if: always()
