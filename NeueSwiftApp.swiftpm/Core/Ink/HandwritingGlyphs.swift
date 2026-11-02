@@ -16,7 +16,7 @@ enum HandwritingGlyphs {
                 [Vec2(8, 2), Vec2(5, 14)],
                 [Vec2(8, 1), Vec2(9, 2), Vec2(5, 14)],
                 [Vec2(3, 20), Vec2(2, 21), Vec2(3, 22), Vec2(4, 21), Vec2(3, 20)],
-            ]
+            ],
         ),
         "\"": Glyph(
             advance: 9,
@@ -25,7 +25,7 @@ enum HandwritingGlyphs {
                 [Vec2(8, 1), Vec2(5, 8)],
                 [Vec2(16, 1), Vec2(14, 8)],
                 [Vec2(17, 1), Vec2(14, 8)],
-            ]
+            ],
         ),
         "#": Glyph(
             advance: 11,
@@ -34,7 +34,7 @@ enum HandwritingGlyphs {
                 [Vec2(17, -3), Vec2(10, 29)],
                 [Vec2(4, 10), Vec2(18, 10)],
                 [Vec2(3, 16), Vec2(17, 16)],
-            ]
+            ],
         ),
         "$": Glyph(
             advance: 11,
@@ -51,7 +51,7 @@ enum HandwritingGlyphs {
                     Vec2(15, 20), Vec2(14, 21), Vec2(11, 22), Vec2(7, 22), Vec2(4, 21), Vec2(3, 20),
                     Vec2(2, 18), Vec2(2, 17), Vec2(3, 16), Vec2(4, 17), Vec2(3, 18),
                 ],
-            ]
+            ],
         ),
         "%": Glyph(
             advance: 12,
@@ -67,7 +67,7 @@ enum HandwritingGlyphs {
                     Vec2(18, 22), Vec2(20, 21), Vec2(21, 19), Vec2(21, 17), Vec2(19, 15),
                     Vec2(17, 15),
                 ],
-            ]
+            ],
         ),
         "&": Glyph(
             advance: 13,
@@ -89,7 +89,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 7), Vec2(11, 12), Vec2(12, 15), Vec2(14, 18), Vec2(16, 20),
                     Vec2(18, 21), Vec2(20, 21), Vec2(21, 20),
                 ],
-            ]
+            ],
         ),
         "'": Glyph(
             advance: 6,
@@ -98,7 +98,7 @@ enum HandwritingGlyphs {
                     Vec2(8, 3), Vec2(7, 2), Vec2(8, 1), Vec2(9, 2), Vec2(9, 3), Vec2(8, 5),
                     Vec2(6, 7),
                 ]
-            ]
+            ],
         ),
         "(": Glyph(
             advance: 8,
@@ -111,7 +111,7 @@ enum HandwritingGlyphs {
                     Vec2(11, 0), Vec2(8, 4), Vec2(6, 8), Vec2(5, 11), Vec2(4, 16), Vec2(4, 21),
                     Vec2(5, 26), Vec2(6, 29),
                 ],
-            ]
+            ],
         ),
         ")": Glyph(
             advance: 7,
@@ -124,7 +124,7 @@ enum HandwritingGlyphs {
                     Vec2(9, -3), Vec2(10, 0), Vec2(11, 5), Vec2(11, 10), Vec2(10, 15), Vec2(9, 18),
                     Vec2(7, 22), Vec2(4, 26),
                 ],
-            ]
+            ],
         ),
         "*": Glyph(
             advance: 9,
@@ -132,14 +132,14 @@ enum HandwritingGlyphs {
                 [Vec2(10, 1), Vec2(10, 13)],
                 [Vec2(5, 4), Vec2(15, 10)],
                 [Vec2(15, 4), Vec2(5, 10)],
-            ]
+            ],
         ),
         "+": Glyph(
             advance: 13,
             strokes: [
                 [Vec2(13, 4), Vec2(13, 22)],
                 [Vec2(4, 13), Vec2(22, 13)],
-            ]
+            ],
         ),
         ",": Glyph(
             advance: 6,
@@ -148,25 +148,25 @@ enum HandwritingGlyphs {
                     Vec2(3, 22), Vec2(2, 21), Vec2(3, 20), Vec2(4, 21), Vec2(4, 22), Vec2(3, 24),
                     Vec2(1, 26),
                 ]
-            ]
+            ],
         ),
         "-": Glyph(
             advance: 13,
             strokes: [
                 [Vec2(4, 13), Vec2(22, 13)]
-            ]
+            ],
         ),
         ".": Glyph(
             advance: 5,
             strokes: [
                 [Vec2(5, 20), Vec2(4, 21), Vec2(5, 22), Vec2(6, 21), Vec2(5, 20)]
-            ]
+            ],
         ),
         "/": Glyph(
             advance: 11,
             strokes: [
                 [Vec2(24, -3), Vec2(-2, 29)]
-            ]
+            ],
         ),
         "0": Glyph(
             advance: 11,
@@ -185,7 +185,7 @@ enum HandwritingGlyphs {
                     Vec2(9, 22), Vec2(11, 21), Vec2(13, 19), Vec2(15, 16), Vec2(16, 13),
                     Vec2(17, 9), Vec2(17, 6), Vec2(16, 3), Vec2(14, 1),
                 ],
-            ]
+            ],
         ),
         "1": Glyph(
             advance: 11,
@@ -194,7 +194,7 @@ enum HandwritingGlyphs {
                 [Vec2(14, 1), Vec2(8, 22)],
                 [Vec2(14, 1), Vec2(11, 4), Vec2(8, 6), Vec2(6, 7)],
                 [Vec2(13, 4), Vec2(9, 6), Vec2(6, 7)],
-            ]
+            ],
         ),
         "2": Glyph(
             advance: 11,
@@ -214,7 +214,7 @@ enum HandwritingGlyphs {
                     Vec2(16, 18),
                 ],
                 [Vec2(5, 19), Vec2(10, 22), Vec2(13, 22), Vec2(15, 21), Vec2(16, 18)],
-            ]
+            ],
         ),
         "3": Glyph(
             advance: 11,
@@ -235,7 +235,7 @@ enum HandwritingGlyphs {
                     Vec2(11, 11), Vec2(13, 12), Vec2(14, 13), Vec2(15, 15), Vec2(15, 18),
                     Vec2(14, 20), Vec2(13, 21), Vec2(11, 22),
                 ],
-            ]
+            ],
         ),
         "4": Glyph(
             advance: 11,
@@ -243,7 +243,7 @@ enum HandwritingGlyphs {
                 [Vec2(16, 2), Vec2(10, 22)],
                 [Vec2(17, 1), Vec2(11, 22)],
                 [Vec2(17, 1), Vec2(2, 16), Vec2(18, 16)],
-            ]
+            ],
         ),
         "5": Glyph(
             advance: 11,
@@ -261,7 +261,7 @@ enum HandwritingGlyphs {
                     Vec2(11, 9), Vec2(13, 10), Vec2(14, 11), Vec2(15, 13), Vec2(15, 16),
                     Vec2(14, 19), Vec2(12, 21), Vec2(10, 22),
                 ],
-            ]
+            ],
         ),
         "6": Glyph(
             advance: 11,
@@ -281,7 +281,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 22), Vec2(12, 21), Vec2(14, 19), Vec2(15, 17), Vec2(15, 13),
                     Vec2(14, 11),
                 ],
-            ]
+            ],
         ),
         "7": Glyph(
             advance: 11,
@@ -297,7 +297,7 @@ enum HandwritingGlyphs {
                     Vec2(6, 3), Vec2(8, 2), Vec2(10, 2), Vec2(15, 4), Vec2(17, 4), Vec2(18, 3),
                     Vec2(19, 1),
                 ],
-            ]
+            ],
         ),
         "8": Glyph(
             advance: 11,
@@ -328,7 +328,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 22), Vec2(13, 21), Vec2(14, 20), Vec2(15, 18), Vec2(15, 14),
                     Vec2(14, 12),
                 ],
-            ]
+            ],
         ),
         "9": Glyph(
             advance: 11,
@@ -345,14 +345,14 @@ enum HandwritingGlyphs {
                     Vec2(16, 2), Vec2(17, 4), Vec2(17, 9), Vec2(16, 13), Vec2(15, 16), Vec2(13, 19),
                     Vec2(11, 21), Vec2(9, 22),
                 ],
-            ]
+            ],
         ),
         ":": Glyph(
             advance: 6,
             strokes: [
                 [Vec2(6, 8), Vec2(5, 9), Vec2(6, 10), Vec2(7, 9), Vec2(6, 8)],
                 [Vec2(3, 20), Vec2(2, 21), Vec2(3, 22), Vec2(4, 21)],
-            ]
+            ],
         ),
         ";": Glyph(
             advance: 6,
@@ -362,26 +362,26 @@ enum HandwritingGlyphs {
                     Vec2(3, 22), Vec2(2, 21), Vec2(3, 20), Vec2(4, 21), Vec2(4, 22), Vec2(3, 24),
                     Vec2(1, 26),
                 ],
-            ]
+            ],
         ),
         "<": Glyph(
             advance: 12,
             strokes: [
                 [Vec2(20, 4), Vec2(4, 13), Vec2(20, 22)]
-            ]
+            ],
         ),
         "=": Glyph(
             advance: 13,
             strokes: [
                 [Vec2(4, 10), Vec2(22, 10)],
                 [Vec2(4, 16), Vec2(22, 16)],
-            ]
+            ],
         ),
         ">": Glyph(
             advance: 12,
             strokes: [
                 [Vec2(4, 4), Vec2(20, 13), Vec2(4, 22)]
-            ]
+            ],
         ),
         "?": Glyph(
             advance: 11,
@@ -397,7 +397,7 @@ enum HandwritingGlyphs {
                     Vec2(14, 10),
                 ],
                 [Vec2(8, 20), Vec2(7, 21), Vec2(8, 22), Vec2(9, 21), Vec2(8, 20)],
-            ]
+            ],
         ),
         "@": Glyph(
             advance: 14,
@@ -417,7 +417,7 @@ enum HandwritingGlyphs {
                     Vec2(21, 19),
                 ],
                 [Vec2(19, 6), Vec2(18, 14), Vec2(18, 16), Vec2(19, 17)],
-            ]
+            ],
         ),
         "A": Glyph(
             advance: 9,
@@ -428,7 +428,7 @@ enum HandwritingGlyphs {
                     Vec2(5, 12), Vec2(4, 13), Vec2(4, 15), Vec2(5, 17), Vec2(7, 19), Vec2(10, 21),
                     Vec2(13, 22), Vec2(18, 22),
                 ]
-            ]
+            ],
         ),
         "B": Glyph(
             advance: 11,
@@ -445,7 +445,7 @@ enum HandwritingGlyphs {
                     Vec2(19, 18), Vec2(18, 20), Vec2(17, 21), Vec2(15, 22), Vec2(12, 22),
                     Vec2(10, 21), Vec2(9, 19),
                 ],
-            ]
+            ],
         ),
         "C": Glyph(
             advance: 10,
@@ -456,7 +456,7 @@ enum HandwritingGlyphs {
                     Vec2(5, 7), Vec2(4, 9), Vec2(3, 13), Vec2(3, 17), Vec2(4, 20), Vec2(5, 21),
                     Vec2(7, 22), Vec2(9, 22), Vec2(12, 21), Vec2(14, 19), Vec2(15, 17),
                 ]
-            ]
+            ],
         ),
         "D": Glyph(
             advance: 12,
@@ -469,7 +469,7 @@ enum HandwritingGlyphs {
                     Vec2(19, 3), Vec2(18, 2), Vec2(16, 1), Vec2(13, 1), Vec2(11, 3), Vec2(11, 5),
                     Vec2(12, 8), Vec2(14, 11), Vec2(16, 13), Vec2(19, 15), Vec2(21, 16),
                 ]
-            ]
+            ],
         ),
         "E": Glyph(
             advance: 10,
@@ -481,7 +481,7 @@ enum HandwritingGlyphs {
                     Vec2(3, 15), Vec2(3, 18), Vec2(4, 20), Vec2(5, 21), Vec2(8, 22), Vec2(11, 22),
                     Vec2(14, 21), Vec2(16, 19), Vec2(17, 17),
                 ]
-            ]
+            ],
         ),
         "F": Glyph(
             advance: 10,
@@ -496,7 +496,7 @@ enum HandwritingGlyphs {
                     Vec2(6, 17),
                 ],
                 [Vec2(9, 11), Vec2(18, 11)],
-            ]
+            ],
         ),
         "G": Glyph(
             advance: 12,
@@ -508,7 +508,7 @@ enum HandwritingGlyphs {
                     Vec2(19, 12), Vec2(18, 17), Vec2(17, 19), Vec2(15, 21), Vec2(12, 22),
                     Vec2(8, 22), Vec2(5, 21), Vec2(3, 19), Vec2(2, 17), Vec2(2, 15),
                 ]
-            ]
+            ],
         ),
         "H": Glyph(
             advance: 12,
@@ -524,7 +524,7 @@ enum HandwritingGlyphs {
                     Vec2(15, 18), Vec2(15, 21), Vec2(16, 22), Vec2(17, 22), Vec2(19, 21),
                     Vec2(20, 20), Vec2(22, 17),
                 ],
-            ]
+            ],
         ),
         "I": Glyph(
             advance: 8,
@@ -535,7 +535,7 @@ enum HandwritingGlyphs {
                     Vec2(13, 12), Vec2(11, 17), Vec2(10, 19), Vec2(8, 21), Vec2(6, 22), Vec2(4, 22),
                     Vec2(2, 21), Vec2(1, 19), Vec2(1, 17), Vec2(2, 16), Vec2(4, 16), Vec2(6, 17),
                 ]
-            ]
+            ],
         ),
         "J": Glyph(
             advance: 7,
@@ -546,7 +546,7 @@ enum HandwritingGlyphs {
                     Vec2(8, 22), Vec2(6, 28), Vec2(5, 31), Vec2(4, 33), Vec2(2, 34), Vec2(1, 33),
                     Vec2(1, 31), Vec2(2, 28), Vec2(4, 25), Vec2(6, 23), Vec2(9, 21), Vec2(13, 19),
                 ]
-            ]
+            ],
         ),
         "K": Glyph(
             advance: 12,
@@ -564,7 +564,7 @@ enum HandwritingGlyphs {
                     Vec2(12, 10), Vec2(13, 12), Vec2(13, 19), Vec2(14, 21), Vec2(15, 22),
                     Vec2(16, 22), Vec2(18, 21), Vec2(19, 20), Vec2(21, 17),
                 ],
-            ]
+            ],
         ),
         "L": Glyph(
             advance: 10,
@@ -576,7 +576,7 @@ enum HandwritingGlyphs {
                     Vec2(0, 21), Vec2(0, 19), Vec2(1, 18), Vec2(3, 18), Vec2(5, 19), Vec2(8, 21),
                     Vec2(11, 22), Vec2(13, 22), Vec2(16, 21), Vec2(18, 19),
                 ]
-            ]
+            ],
         ),
         "M": Glyph(
             advance: 15,
@@ -595,7 +595,7 @@ enum HandwritingGlyphs {
                     Vec2(28, 2), Vec2(29, 4), Vec2(29, 6), Vec2(28, 11), Vec2(26, 18), Vec2(26, 21),
                     Vec2(27, 22), Vec2(28, 22), Vec2(30, 21), Vec2(31, 20), Vec2(33, 17),
                 ],
-            ]
+            ],
         ),
         "N": Glyph(
             advance: 11,
@@ -610,7 +610,7 @@ enum HandwritingGlyphs {
                     Vec2(19, 2), Vec2(20, 4), Vec2(20, 6), Vec2(19, 11), Vec2(17, 18), Vec2(17, 21),
                     Vec2(18, 22), Vec2(19, 22), Vec2(21, 21), Vec2(22, 20), Vec2(24, 17),
                 ],
-            ]
+            ],
         ),
         "O": Glyph(
             advance: 11,
@@ -622,7 +622,7 @@ enum HandwritingGlyphs {
                     Vec2(17, 3), Vec2(16, 2), Vec2(14, 1), Vec2(12, 1), Vec2(10, 3), Vec2(10, 6),
                     Vec2(11, 9), Vec2(13, 12), Vec2(15, 14), Vec2(18, 16), Vec2(20, 17),
                 ]
-            ]
+            ],
         ),
         "P": Glyph(
             advance: 13,
@@ -635,7 +635,7 @@ enum HandwritingGlyphs {
                     Vec2(23, 10), Vec2(22, 11), Vec2(20, 12), Vec2(17, 12), Vec2(15, 11),
                     Vec2(14, 10),
                 ]
-            ]
+            ],
         ),
         "Q": Glyph(
             advance: 12,
@@ -648,7 +648,7 @@ enum HandwritingGlyphs {
                     Vec2(3, 18), Vec2(5, 19), Vec2(8, 21), Vec2(11, 22), Vec2(14, 22), Vec2(17, 21),
                     Vec2(19, 19),
                 ]
-            ]
+            ],
         ),
         "R": Glyph(
             advance: 13,
@@ -662,7 +662,7 @@ enum HandwritingGlyphs {
                     Vec2(14, 12), Vec2(15, 14), Vec2(15, 19), Vec2(16, 21), Vec2(18, 22),
                     Vec2(20, 21), Vec2(21, 20), Vec2(23, 17),
                 ]
-            ]
+            ],
         ),
         "S": Glyph(
             advance: 10,
@@ -674,7 +674,7 @@ enum HandwritingGlyphs {
                     Vec2(17, 18), Vec2(16, 20), Vec2(15, 21), Vec2(12, 22), Vec2(8, 22),
                     Vec2(5, 21), Vec2(3, 19), Vec2(2, 17), Vec2(2, 15),
                 ]
-            ]
+            ],
         ),
         "T": Glyph(
             advance: 9,
@@ -688,7 +688,7 @@ enum HandwritingGlyphs {
                     Vec2(4, 22), Vec2(2, 21), Vec2(1, 19), Vec2(1, 17), Vec2(2, 16), Vec2(4, 16),
                     Vec2(6, 17),
                 ],
-            ]
+            ],
         ),
         "U": Glyph(
             advance: 11,
@@ -703,7 +703,7 @@ enum HandwritingGlyphs {
                     Vec2(19, 8), Vec2(18, 12), Vec2(17, 18), Vec2(17, 21), Vec2(18, 22),
                     Vec2(19, 22), Vec2(21, 21), Vec2(22, 20), Vec2(24, 17),
                 ],
-            ]
+            ],
         ),
         "V": Glyph(
             advance: 11,
@@ -716,7 +716,7 @@ enum HandwritingGlyphs {
                     Vec2(18, 1), Vec2(17, 2), Vec2(16, 4), Vec2(16, 6), Vec2(17, 9), Vec2(19, 11),
                     Vec2(21, 12),
                 ]
-            ]
+            ],
         ),
         "W": Glyph(
             advance: 13,
@@ -728,7 +728,7 @@ enum HandwritingGlyphs {
                 [Vec2(18, 1), Vec2(8, 22)],
                 [Vec2(18, 1), Vec2(16, 22)],
                 [Vec2(30, 1), Vec2(28, 2), Vec2(25, 5), Vec2(22, 9), Vec2(19, 15), Vec2(16, 22)],
-            ]
+            ],
         ),
         "X": Glyph(
             advance: 12,
@@ -744,7 +744,7 @@ enum HandwritingGlyphs {
                     Vec2(14, 7), Vec2(10, 16), Vec2(8, 19), Vec2(6, 21), Vec2(4, 22), Vec2(2, 22),
                     Vec2(1, 21), Vec2(1, 19),
                 ],
-            ]
+            ],
         ),
         "Y": Glyph(
             advance: 11,
@@ -760,7 +760,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 33), Vec2(8, 34), Vec2(7, 33), Vec2(7, 31), Vec2(8, 28), Vec2(10, 25),
                     Vec2(13, 22), Vec2(16, 20), Vec2(21, 17),
                 ],
-            ]
+            ],
         ),
         "Z": Glyph(
             advance: 11,
@@ -774,7 +774,7 @@ enum HandwritingGlyphs {
                     Vec2(6, 33), Vec2(4, 34), Vec2(3, 33), Vec2(3, 31), Vec2(4, 28), Vec2(6, 25),
                     Vec2(9, 22), Vec2(12, 20), Vec2(18, 17),
                 ]
-            ]
+            ],
         ),
         "[": Glyph(
             advance: 7,
@@ -783,13 +783,13 @@ enum HandwritingGlyphs {
                 [Vec2(5, -3), Vec2(5, 29)],
                 [Vec2(4, -3), Vec2(11, -3)],
                 [Vec2(4, 29), Vec2(11, 29)],
-            ]
+            ],
         ),
         "\\": Glyph(
             advance: 7,
             strokes: [
                 [Vec2(0, 1), Vec2(14, 25)]
-            ]
+            ],
         ),
         "]": Glyph(
             advance: 7,
@@ -798,7 +798,7 @@ enum HandwritingGlyphs {
                 [Vec2(10, -3), Vec2(10, 29)],
                 [Vec2(3, -3), Vec2(10, -3)],
                 [Vec2(3, 29), Vec2(10, 29)],
-            ]
+            ],
         ),
         "^": Glyph(
             advance: 8,
@@ -806,13 +806,13 @@ enum HandwritingGlyphs {
                 [Vec2(6, 7), Vec2(8, 4), Vec2(10, 7)],
                 [Vec2(3, 10), Vec2(8, 5), Vec2(13, 10)],
                 [Vec2(8, 5), Vec2(8, 22)],
-            ]
+            ],
         ),
         "_": Glyph(
             advance: 8,
             strokes: [
                 [Vec2(0, 24), Vec2(16, 24)]
-            ]
+            ],
         ),
         "`": Glyph(
             advance: 6,
@@ -821,7 +821,7 @@ enum HandwritingGlyphs {
                     Vec2(9, 1), Vec2(7, 3), Vec2(6, 5), Vec2(6, 6), Vec2(7, 7), Vec2(8, 6),
                     Vec2(7, 5),
                 ]
-            ]
+            ],
         ),
         "a": Glyph(
             advance: 10,
@@ -832,7 +832,7 @@ enum HandwritingGlyphs {
                     Vec2(8, 19), Vec2(10, 13), Vec2(9, 18), Vec2(9, 21), Vec2(10, 22), Vec2(11, 22),
                     Vec2(13, 21), Vec2(14, 20), Vec2(16, 17),
                 ]
-            ]
+            ],
         ),
         "b": Glyph(
             advance: 9,
@@ -843,7 +843,7 @@ enum HandwritingGlyphs {
                     Vec2(2, 22), Vec2(3, 22), Vec2(5, 21), Vec2(7, 19), Vec2(8, 16), Vec2(8, 13),
                     Vec2(9, 17), Vec2(10, 18), Vec2(12, 18), Vec2(14, 17),
                 ]
-            ]
+            ],
         ),
         "c": Glyph(
             advance: 6,
@@ -853,7 +853,7 @@ enum HandwritingGlyphs {
                     Vec2(0, 17), Vec2(0, 19), Vec2(1, 21), Vec2(3, 22), Vec2(6, 22), Vec2(9, 20),
                     Vec2(11, 17),
                 ]
-            ]
+            ],
         ),
         "d": Glyph(
             advance: 10,
@@ -867,7 +867,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 13), Vec2(9, 18), Vec2(9, 21), Vec2(10, 22), Vec2(11, 22),
                     Vec2(13, 21), Vec2(14, 20), Vec2(16, 17),
                 ],
-            ]
+            ],
         ),
         "e": Glyph(
             advance: 6,
@@ -877,7 +877,7 @@ enum HandwritingGlyphs {
                     Vec2(3, 13), Vec2(1, 14), Vec2(0, 16), Vec2(0, 19), Vec2(1, 21), Vec2(3, 22),
                     Vec2(5, 22), Vec2(7, 21), Vec2(8, 20), Vec2(10, 17),
                 ]
-            ]
+            ],
         ),
         "f": Glyph(
             advance: 5,
@@ -888,7 +888,7 @@ enum HandwritingGlyphs {
                     Vec2(-5, 31), Vec2(-5, 33), Vec2(-4, 34), Vec2(-2, 33), Vec2(-1, 30),
                     Vec2(0, 21), Vec2(1, 22), Vec2(3, 22), Vec2(5, 21), Vec2(6, 20), Vec2(8, 17),
                 ]
-            ]
+            ],
         ),
         "g": Glyph(
             advance: 9,
@@ -903,7 +903,7 @@ enum HandwritingGlyphs {
                     Vec2(0, 31), Vec2(1, 28), Vec2(4, 25), Vec2(7, 23), Vec2(9, 22), Vec2(12, 20),
                     Vec2(15, 17),
                 ],
-            ]
+            ],
         ),
         "h": Glyph(
             advance: 10,
@@ -917,7 +917,7 @@ enum HandwritingGlyphs {
                     Vec2(9, 14), Vec2(9, 16), Vec2(8, 19), Vec2(8, 21), Vec2(9, 22), Vec2(10, 22),
                     Vec2(12, 21), Vec2(13, 20), Vec2(15, 17),
                 ],
-            ]
+            ],
         ),
         "i": Glyph(
             advance: 5,
@@ -927,7 +927,7 @@ enum HandwritingGlyphs {
                     Vec2(0, 17), Vec2(2, 13), Vec2(0, 19), Vec2(0, 21), Vec2(1, 22), Vec2(2, 22),
                     Vec2(4, 21), Vec2(5, 20), Vec2(7, 17),
                 ],
-            ]
+            ],
         ),
         "j": Glyph(
             advance: 5,
@@ -938,7 +938,7 @@ enum HandwritingGlyphs {
                     Vec2(-8, 33), Vec2(-8, 31), Vec2(-7, 28), Vec2(-4, 25), Vec2(-1, 23),
                     Vec2(1, 22), Vec2(4, 20), Vec2(7, 17),
                 ],
-            ]
+            ],
         ),
         "k": Glyph(
             advance: 9,
@@ -955,7 +955,7 @@ enum HandwritingGlyphs {
                     Vec2(4, 17), Vec2(6, 18), Vec2(7, 21), Vec2(8, 22), Vec2(9, 22), Vec2(11, 21),
                     Vec2(12, 20), Vec2(14, 17),
                 ],
-            ]
+            ],
         ),
         "l": Glyph(
             advance: 5,
@@ -965,7 +965,7 @@ enum HandwritingGlyphs {
                     Vec2(6, 1), Vec2(4, 2), Vec2(3, 4), Vec2(2, 8), Vec2(1, 15), Vec2(1, 21),
                     Vec2(2, 22), Vec2(3, 22), Vec2(5, 21), Vec2(6, 20), Vec2(8, 17),
                 ]
-            ]
+            ],
         ),
         "m": Glyph(
             advance: 12,
@@ -983,7 +983,7 @@ enum HandwritingGlyphs {
                     Vec2(19, 14), Vec2(19, 16), Vec2(18, 19), Vec2(18, 21), Vec2(19, 22),
                     Vec2(20, 22), Vec2(22, 21), Vec2(23, 20), Vec2(25, 17),
                 ],
-            ]
+            ],
         ),
         "n": Glyph(
             advance: 10,
@@ -997,7 +997,7 @@ enum HandwritingGlyphs {
                     Vec2(12, 16), Vec2(11, 19), Vec2(11, 21), Vec2(12, 22), Vec2(13, 22),
                     Vec2(15, 21), Vec2(16, 20), Vec2(18, 17),
                 ],
-            ]
+            ],
         ),
         "o": Glyph(
             advance: 8,
@@ -1008,7 +1008,7 @@ enum HandwritingGlyphs {
                     Vec2(9, 16), Vec2(8, 14), Vec2(6, 13), Vec2(5, 14), Vec2(5, 16), Vec2(6, 18),
                     Vec2(8, 19), Vec2(11, 19), Vec2(13, 18), Vec2(14, 17),
                 ]
-            ]
+            ],
         ),
         "p": Glyph(
             advance: 8,
@@ -1019,7 +1019,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 18), Vec2(9, 20), Vec2(8, 21), Vec2(6, 22),
                 ],
                 [Vec2(2, 21), Vec2(4, 22), Vec2(7, 22), Vec2(10, 21), Vec2(12, 20), Vec2(15, 17)],
-            ]
+            ],
         ),
         "q": Glyph(
             advance: 9,
@@ -1033,7 +1033,7 @@ enum HandwritingGlyphs {
                     Vec2(4, 34), Vec2(6, 33), Vec2(7, 30), Vec2(7, 23), Vec2(9, 22), Vec2(12, 20),
                     Vec2(15, 17),
                 ],
-            ]
+            ],
         ),
         "r": Glyph(
             advance: 8,
@@ -1043,7 +1043,7 @@ enum HandwritingGlyphs {
                     Vec2(7, 17), Vec2(6, 20), Vec2(6, 21), Vec2(7, 22), Vec2(8, 22), Vec2(10, 21),
                     Vec2(11, 20), Vec2(13, 17),
                 ]
-            ]
+            ],
         ),
         "s": Glyph(
             advance: 7,
@@ -1053,7 +1053,7 @@ enum HandwritingGlyphs {
                     Vec2(6, 21), Vec2(4, 22),
                 ],
                 [Vec2(0, 21), Vec2(2, 22), Vec2(6, 22), Vec2(8, 21), Vec2(9, 20), Vec2(11, 17)],
-            ]
+            ],
         ),
         "t": Glyph(
             advance: 6,
@@ -1064,7 +1064,7 @@ enum HandwritingGlyphs {
                     Vec2(7, 20), Vec2(9, 17),
                 ],
                 [Vec2(1, 9), Vec2(8, 9)],
-            ]
+            ],
         ),
         "u": Glyph(
             advance: 9,
@@ -1077,7 +1077,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 13), Vec2(8, 19), Vec2(8, 21), Vec2(9, 22), Vec2(10, 22), Vec2(12, 21),
                     Vec2(13, 20), Vec2(15, 17),
                 ],
-            ]
+            ],
         ),
         "v": Glyph(
             advance: 9,
@@ -1087,7 +1087,7 @@ enum HandwritingGlyphs {
                     Vec2(6, 21), Vec2(8, 19), Vec2(9, 16), Vec2(9, 13),
                 ],
                 [Vec2(9, 13), Vec2(10, 17), Vec2(11, 18), Vec2(13, 18), Vec2(15, 17)],
-            ]
+            ],
         ),
         "w": Glyph(
             advance: 12,
@@ -1101,7 +1101,7 @@ enum HandwritingGlyphs {
                     Vec2(14, 19), Vec2(15, 16), Vec2(15, 13),
                 ],
                 [Vec2(15, 13), Vec2(16, 17), Vec2(17, 18), Vec2(19, 18), Vec2(21, 17)],
-            ]
+            ],
         ),
         "x": Glyph(
             advance: 8,
@@ -1114,7 +1114,7 @@ enum HandwritingGlyphs {
                     Vec2(13, 14), Vec2(12, 13), Vec2(10, 13), Vec2(9, 14), Vec2(5, 21), Vec2(4, 22),
                     Vec2(2, 22), Vec2(1, 21),
                 ],
-            ]
+            ],
         ),
         "y": Glyph(
             advance: 9,
@@ -1127,7 +1127,7 @@ enum HandwritingGlyphs {
                     Vec2(10, 13), Vec2(4, 31), Vec2(3, 33), Vec2(1, 34), Vec2(0, 33), Vec2(0, 31),
                     Vec2(1, 28), Vec2(4, 25), Vec2(7, 23), Vec2(9, 22), Vec2(12, 20), Vec2(15, 17),
                 ],
-            ]
+            ],
         ),
         "z": Glyph(
             advance: 8,
@@ -1138,7 +1138,7 @@ enum HandwritingGlyphs {
                     Vec2(4, 31), Vec2(3, 33), Vec2(1, 34), Vec2(0, 33), Vec2(0, 31), Vec2(1, 28),
                     Vec2(4, 25), Vec2(7, 23), Vec2(11, 20), Vec2(14, 17),
                 ]
-            ]
+            ],
         ),
         "{": Glyph(
             advance: 7,
@@ -1156,13 +1156,13 @@ enum HandwritingGlyphs {
                     Vec2(6, 14), Vec2(8, 16), Vec2(8, 18), Vec2(7, 20), Vec2(6, 21), Vec2(5, 23),
                     Vec2(5, 25), Vec2(6, 27), Vec2(7, 28), Vec2(9, 29),
                 ],
-            ]
+            ],
         ),
         "|": Glyph(
             advance: 4,
             strokes: [
                 [Vec2(4, -3), Vec2(4, 29)]
-            ]
+            ],
         ),
         "}": Glyph(
             advance: 7,
@@ -1180,7 +1180,7 @@ enum HandwritingGlyphs {
                     Vec2(8, 14), Vec2(6, 16), Vec2(6, 18), Vec2(7, 20), Vec2(8, 21), Vec2(9, 23),
                     Vec2(9, 25), Vec2(8, 27), Vec2(7, 28), Vec2(5, 29),
                 ],
-            ]
+            ],
         ),
         "~": Glyph(
             advance: 12,
@@ -1193,7 +1193,7 @@ enum HandwritingGlyphs {
                     Vec2(3, 14), Vec2(4, 12), Vec2(6, 11), Vec2(8, 11), Vec2(10, 12), Vec2(14, 15),
                     Vec2(16, 16), Vec2(18, 16), Vec2(20, 15), Vec2(21, 12), Vec2(21, 10),
                 ],
-            ]
+            ],
         ),
     ]
 

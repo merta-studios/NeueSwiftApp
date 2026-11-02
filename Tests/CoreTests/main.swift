@@ -804,8 +804,8 @@ expect(HandwritingGlyphs.glyph(for: "Ä") != nil, "German uppercase umlaut")
 expect(HandwritingGlyphs.glyph(for: "ß") != nil, "Eszett template")
 expect(HandwritingGlyphs.glyph(for: "7") != nil, "Digit template")
 expect(HandwritingGlyphs.glyph(for: "🙂") == nil, "Unsupported glyph is rejected, not guessed")
-for scalar in Unicode.Scalar(33)...Unicode.Scalar(126) {
-    let character = Character(scalar)
+for value in 33...126 {
+    let character = Character(Unicode.Scalar(value)!)
     if let glyph = HandwritingGlyphs.glyph(for: character) {
         expect(
             glyph.strokes.allSatisfy { $0.count >= 2 },
