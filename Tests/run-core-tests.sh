@@ -101,6 +101,17 @@ if ! typecheck_output="$("$compiler" -typecheck "${sources[@]}" "${tests[@]}" 2>
 fi
 ok "Typ-Prüfung bestanden"
 
+# Swift Playgrounds 4.7 bringt Swift 6 mit. Zusätzlich zum normalen Build muss
+# der plattformunabhängige Kern auch im Swift-6-Sprachmodus typkorrekt sein
+# (strenge Nebenläufigkeit, Sendable-Prüfung statischer Tabellen).
+if ! swift6_output="$("$compiler" -swift-version 6 -typecheck "${sources[@]}" 2>&1)"; then
+    err "Typ-Prüfung im Swift-6-Sprachmodus fehlgeschlagen."
+    ci_report_swift_output "$swift6_output"
+    summary_append "- ❌ App-Logik: Swift-6-Typ-Prüfung fehlgeschlagen"
+    exit 1
+fi
+ok "Swift-6-Typ-Prüfung bestanden"
+
 # ---------------------------------------------------------------- Tests bauen
 
 build_dir="$(mktemp -d "${TMPDIR:-/tmp}/neueswiftapp-core-tests.XXXXXX")"
@@ -140,5 +151,5 @@ if [ "$test_rc" -ne 0 ]; then
 fi
 
 ok "Regressionstests der App-Logik bestanden"
-summary_append "- ✅ App-Logik: Typ-Prüfung und Regressionstests bestanden"
+summary_append "- ✅ App-Logik: Typ-Prüfung (inkl. Swift 6) und Regressionstests bestanden"
 exit 0

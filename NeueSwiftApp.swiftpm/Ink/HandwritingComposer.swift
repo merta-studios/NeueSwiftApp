@@ -50,7 +50,7 @@ enum HandwritingComposer {
     /// Conservative acceptance: confident, well-covered text only. Drawings,
     /// unsupported scripts and uncertain readings keep their original ink.
     static func compose(words: [RecognizedWord], source: [[InkPoint]]) -> [[InkPoint]]? {
-        guard !words.isEmpty, !source.isEmpty else { return nil }
+        guard HandwritingGlyphs.isAvailable, !words.isEmpty, !source.isEmpty else { return nil }
         let all = source.flatMap { $0 }
         guard let first = all.first else { return nil }
         let original = InkBounds(points: all.map { $0.position })

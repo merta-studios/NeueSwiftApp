@@ -208,6 +208,9 @@ if let manifest {
         "Manifest nutzt dieselbe Mindest-iOS-Version wie AppMetadata"
     )
     expect(manifest.contains("import AppleProductTypes"), "Manifest ist ein Playgrounds-App-Paket")
+    expect(
+        manifest.contains(".copy(\"Core/Ink/HERSHEY-LICENSE.txt\")"),
+        "Hershey-Lizenz ist als Ressource deklariert")
 }
 
 // MARK: - Hilfen für die Tests der Tinten-Engine
@@ -799,18 +802,54 @@ expectEqual(reversePairs.count, 4, "Many printed strokes can converge into one l
 
 // MARK: - Handwriting templates
 
-expect(HandwritingGlyphs.glyph(for: "a") != nil, "Lowercase template")
-expect(HandwritingGlyphs.glyph(for: "Ä") != nil, "German uppercase umlaut")
-expect(HandwritingGlyphs.glyph(for: "ß") != nil, "Eszett template")
-expect(HandwritingGlyphs.glyph(for: "7") != nil, "Digit template")
-expect(HandwritingGlyphs.glyph(for: "🙂") == nil, "Unsupported glyph is rejected, not guessed")
+// Die Daten müssen vollständig dekodieren, nicht nur „irgendein“ Glyph liefern.
+expect(HandwritingGlyphs.isAvailable, "Alle gebündelten Glyphen sind dekodiert")
+expectEqual(
+    HandwritingGlyphs.availableCount, HandwritingGlyphs.bundledGlyphCount,
+    "Kein Glyph fehlt und keiner ist doppelt")
 for value in 33...126 {
     let character = Character(Unicode.Scalar(value)!)
-    if let glyph = HandwritingGlyphs.glyph(for: character) {
-        expect(
-            glyph.strokes.allSatisfy { $0.count >= 2 },
-            "Printable glyph has drawable strokes: \(character)")
-    }
+    let glyph = HandwritingGlyphs.glyph(for: character)
+    expect(glyph != nil, "Printable ASCII glyph exists: \(character)")
+    expect(
+        glyph?.strokes.allSatisfy { $0.count >= 2 } == true,
+        "Printable glyph has drawable strokes: \(character)")
+}
+
+// Stichproben gegen die ursprünglichen Hershey-Koordinaten. Schützt vor einem
+// verrutschten Decoder, ohne die 4226 Koordinaten als Swift-Literal zu duplizieren.
+if let a = HandwritingGlyphs.glyph(for: "a") {
+    expectEqual(a.advance, 10, "Advance von a")
+    expectEqual(a.strokes.count, 1, "a ist ein Single-Stroke-Glyph")
+    expectEqual(a.strokes.first?.first, Vec2(9, 16), "a beginnt am Originalpunkt")
+    expectEqual(a.strokes.first?.last, Vec2(16, 17), "a endet am Originalpunkt")
+}
+if let eszett = HandwritingGlyphs.glyph(for: "ß") {
+    expectEqual(eszett.advance, 18, "Advance von ß")
+    expectEqual(eszett.strokes.first?.first, Vec2(2, 20), "ß beginnt am Originalpunkt")
+    expectEqual(eszett.strokes.first?.last, Vec2(7, 20), "ß endet am Originalpunkt")
+}
+if let umlaut = HandwritingGlyphs.glyph(for: "Ä") {
+    expectEqual(umlaut.strokes.count, 3, "Ä übernimmt A und ergänzt zwei Punkte")
+}
+expect(HandwritingGlyphs.glyph(for: "🙂") == nil, "Unsupported glyph is rejected, not guessed")
+
+// Fehlerhafte Daten dürfen keinen halb fertigen Zeichensatz erzeugen.
+expectNil(HandwritingGlyphs.decode(""), "Leere Glyphdaten sind ungültig")
+expectNil(
+    HandwritingGlyphs.decode("65|10|0,0 1,1\n65|10|2,2 3,3"),
+    "Doppelte Glyphen sind ungültig")
+expectNil(HandwritingGlyphs.decode("65|10|0,0 nan"), "Nicht-endliche Koordinaten sind ungültig")
+expectNil(HandwritingGlyphs.decode("65|10|0,0;"), "Leere Striche sind ungültig")
+expectNil(HandwritingGlyphs.decode("65|0|0,0 1,1"), "Vorschub muss positiv sein")
+expectNil(
+    HandwritingGlyphs.decode("1114112|10|0,0 1,1"),
+    "Ungültiger Unicode-Skalar ist ungültig")
+if let decoded = HandwritingGlyphs.decode("65|10|0,0 1,1;2,2 3,3") {
+    expectEqual(decoded.count, 1, "Gültige Mini-Daten dekodieren vollständig")
+    expectEqual(decoded["A"]?.strokes.count, 2, "Strichgruppen bleiben erhalten")
+} else {
+    expect(false, "Gültige Mini-Daten dekodieren")
 }
 
 // MARK: - Input contract and writing-line grouping

@@ -7,9 +7,19 @@ import UIKit
 /// schwach referenziert – damit bleibt die App sauber, auch wenn Ansichten
 /// ausgetauscht werden.
 final class DisplayLinkProxy: NSObject {
+    weak var owner: AnyObject?
+    weak var displayLink: CADisplayLink?
     var handler: (() -> Void)?
 
     @objc func step() {
+        // If the canvas is gone, stop the run-loop source without requiring
+        // the canvas deinit to touch a non-Sendable CADisplayLink (Swift 6).
+        guard owner != nil else {
+            displayLink?.invalidate()
+            displayLink = nil
+            handler = nil
+            return
+        }
         handler?()
     }
 }

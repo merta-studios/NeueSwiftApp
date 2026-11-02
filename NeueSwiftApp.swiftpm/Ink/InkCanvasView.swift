@@ -42,7 +42,8 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
     }
 
     deinit {
-        displayLink?.invalidate()
+        // CADisplayLink is cleaned up by DisplayLinkProxy on its next tick;
+        // touching it here is not allowed from a nonisolated Swift 6 deinit.
         recognitionTask?.cancel()
         debounceTask?.cancel()
     }
@@ -65,6 +66,7 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
         inkLayer.addSublayer(liveLayer)
         store.attach(to: inkLayer, below: liveLayer)
 
+        displayLinkProxy.owner = self
         displayLinkProxy.handler = { [weak self] in self?.tick() }
 
         let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
@@ -333,6 +335,7 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
             target: displayLinkProxy, selector: #selector(DisplayLinkProxy.step))
         link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
         link.add(to: .main, forMode: .common)
+        displayLinkProxy.displayLink = link
         displayLink = link
     }
 

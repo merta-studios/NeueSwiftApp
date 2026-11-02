@@ -5,7 +5,7 @@ import Foundation
 /// Bewusst ein eigener Typ statt `CGPoint`: `Core/` bleibt ohne CoreGraphics und
 /// UIKit und lässt sich damit unter Linux mit echtem Compiler prüfen und testen
 /// (siehe `Tests/run-core-tests.sh`). Die UIKit-Schicht rechnet an der Grenze um.
-struct Vec2: Equatable {
+struct Vec2: Equatable, Sendable {
     var x: Double
     var y: Double
 

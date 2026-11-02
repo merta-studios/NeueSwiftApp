@@ -1,7 +1,7 @@
 import Foundation
 
 /// One logical stroke. Rendering may batch strokes, but history never merges them.
-struct InkStroke: Identifiable, Equatable {
+struct InkStroke: Identifiable, Equatable, Sendable {
     let id: UUID
     var points: [InkPoint]
     var isRefined: Bool
@@ -16,7 +16,7 @@ struct InkStroke: Identifiable, Equatable {
 }
 
 /// Platform-independent rectangle (Core stays testable without CoreGraphics).
-struct InkBounds: Equatable {
+struct InkBounds: Equatable, Sendable {
     var minX: Double
     var minY: Double
     var maxX: Double
