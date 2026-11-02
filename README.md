@@ -30,15 +30,21 @@ ausgetauscht zu werden. Die Engine lernt dabei aus deiner eigenen Schrift.
 4. Oben auf **▶** tippen. Die App startet im Vollbild mit der Schreibfläche.
 
 Voraussetzungen: iPadOS 17 oder neuer, Apple Pencil (getestet werden soll es mit
-dem Apple Pencil Pro), Swift Playgrounds 4.6 oder neuer. **Nur der Apple Pencil
-schreibt** – Finger sind ausschließlich für Navigation und Gesten zuständig,
-auch im Simulator und vor dem ersten Stiftkontakt.
+dem Apple Pencil Pro), Swift Playgrounds 4.6 oder neuer; für Apple Intelligence
+in Swift Playgrounds wird **4.7 oder neuer** empfohlen (iOS-26-SDK). **Nur der
+Apple Pencil schreibt** – Finger sind ausschließlich für Navigation und Gesten
+zuständig, auch im Simulator und vor dem ersten Stiftkontakt.
 
 Apple Intelligence (iPadOS 26, unterstütztes Gerät) hilft bei mehrdeutigen
 Wörtern: Die lokale Vision-Handschrifterkennung liefert Kandidaten, das
 Foundation-Model wählt den passendsten aus. Es erfindet keine neuen Texte.
 Auf älteren Systemen bleibt die lokale Vision-Erkennung aktiv; die
 Strichglättung funktioniert immer.
+
+Die Schrifthablonen liegen als kompakter Datensatz im Code und werden erst bei
+der ersten Erkennung dekodiert. Das vermeidet tausende verschachtelte
+Swift-Literale, die den iPad-Compiler unnötig belasten. Die Lizenzdatei ist im
+Paketmanifest als Ressource deklariert.
 
 ## Bedienung
 
@@ -154,6 +160,12 @@ iPad. Der Nachbau liegt bewusst nicht im App-Paket.
 
 
 ## Schriftverfeinerung mit Apple Intelligence
+
+> **Build failed in Swift Playgrounds?** Bitte eine frisch heruntergeladene
+> Kopie des Repository verwenden, Swift Playgrounds 4.7 oder neuer installieren
+> und das iPad einmal neu starten. Der iOS-Build in GitHub Actions prüft auch
+> den Swift-6-Sprachmodus der App-Logik; ein echter Playgrounds-Start auf dem
+> iPad bleibt zusätzlich nötig.
 
 Nach einer kurzen Schreibpause erkennt die App die neueste Zeile lokal. Bei
 hohen Konfidenzwerten verformen sich die Original-Linien sichtbar in eine

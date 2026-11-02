@@ -68,6 +68,7 @@ log "Unsignierter Release-Build für iOS"
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGN_IDENTITY="" \
         CODE_SIGN_ENTITLEMENTS="" \
+        SWIFT_VERSION=6 \
         clean build 2>&1 | tee "$out_dir/xcodebuild-ipa.log"
 ) || {
     err "Build fehlgeschlagen (siehe build/xcodebuild-ipa.log)."

@@ -1,7 +1,7 @@
 import Foundation
 
 /// A one-to-one animation pair. Both sides have the same sample count.
-struct StrokeMorphPair {
+struct StrokeMorphPair: Sendable {
     var source: [InkPoint]
     var target: [InkPoint]
 }

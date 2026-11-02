@@ -8,6 +8,9 @@
 #   3. App in einen Simulator installieren, starten und prüfen, dass der
 #      Prozess läuft (Screenshot als Nachweis).
 #
+# Der Build setzt SWIFT_VERSION=6, damit strenge Nebenläufigkeitsfehler nicht
+# erst in Swift Playgrounds 4.7 auf dem iPad auftauchen.
+#
 # Kann das Paket (Swift-Playgrounds-App, `.swiftpm`) nicht im Simulator gebaut
 # werden, wird auf einen unsignierten iOS-Device-Build ausgewichen. Das ist
 # eine dokumentierte Einschränkung und wird laut gemeldet – ein echter
@@ -108,6 +111,7 @@ build_for() { # build_for <destination> <logname> [zusätzliche Argumente...]
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
+            SWIFT_VERSION=6 \
             "$@" 2>&1 | tee "$log_dir/$logname"
     )
 }

@@ -43,7 +43,8 @@ let package = Package(
             name: "AppModule",
             path: ".",
             resources: [
-                .process("Assets.xcassets")
+                .process("Assets.xcassets"),
+                .copy("Core/Ink/HERSHEY-LICENSE.txt"),
             ]
         )
     ]
