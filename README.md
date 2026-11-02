@@ -30,9 +30,15 @@ ausgetauscht zu werden. Die Engine lernt dabei aus deiner eigenen Schrift.
 4. Oben auf **▶** tippen. Die App startet im Vollbild mit der Schreibfläche.
 
 Voraussetzungen: iPadOS 17 oder neuer, Apple Pencil (getestet werden soll es mit
-dem Apple Pencil Pro), Swift Playgrounds 4.6 oder neuer. Ohne Pencil lässt sich
-mit dem Finger schreiben (z. B. im Simulator) – sobald einmal ein Pencil erkannt
-wurde, schreiben nur noch Stifte, Finger zoomen.
+dem Apple Pencil Pro), Swift Playgrounds 4.6 oder neuer. **Nur der Apple Pencil
+schreibt** – Finger sind ausschließlich für Navigation und Gesten zuständig,
+auch im Simulator und vor dem ersten Stiftkontakt.
+
+Apple Intelligence (iPadOS 26, unterstütztes Gerät) hilft bei mehrdeutigen
+Wörtern: Die lokale Vision-Handschrifterkennung liefert Kandidaten, das
+Foundation-Model wählt den passendsten aus. Es erfindet keine neuen Texte.
+Auf älteren Systemen bleibt die lokale Vision-Erkennung aktiv; die
+Strichglättung funktioniert immer.
 
 ## Bedienung
 
@@ -41,6 +47,7 @@ wurde, schreiben nur noch Stifte, Finger zoomen.
 | Apple Pencil | schreiben |
 | Zwei Finger ziehen | verschieben |
 | Zwei Finger auf-/zuziehen | zoomen (um den Punkt zwischen den Fingern) |
+| Drei Finger doppeltippen | Wiederholen |
 | Zwei Finger doppeltippen | Zoom zurücksetzen (100 %, Ursprung) |
 | Drei Finger tippen | letzten Strich zurücknehmen |
 
@@ -144,6 +151,21 @@ sind an genau dieser Tabelle gescheitert und wurden verworfen:
 
 Die Zahlen sind eine Eigenschaft des Algorithmus, keine Messung der App auf dem
 iPad. Der Nachbau liegt bewusst nicht im App-Paket.
+
+
+## Schriftverfeinerung mit Apple Intelligence
+
+Nach einer kurzen Schreibpause erkennt die App die neueste Zeile lokal. Bei
+hohen Konfidenzwerten verformen sich die Original-Linien sichtbar in eine
+ruhigere Single-Stroke-Schrift (Hershey-basierte Vektorvorlagen, keine
+Textersatz-Box). Die Originalstriche bleiben für Undo erhalten; eine ganze
+verfeinerte Zeile ist ein einziger Widerruf-Schritt. Unsichere Erkennungen,
+Zeichnungen und nicht unterstützte Zeichen bleiben unangetastet.
+
+Die kleine Leiste unten rechts bietet Widerrufen, Wiederholen und ein
+Sparkles-Menü (automatische Korrektur an/aus, letzte Zeile sofort verfeinern).
+Es gibt kein PencilKit: Eingabe, Morph-Animation und Rendering bleiben ein
+eigenes UIKit-Canvas mit `CAShapeLayer`-Vektoren.
 
 ## Projektstruktur
 

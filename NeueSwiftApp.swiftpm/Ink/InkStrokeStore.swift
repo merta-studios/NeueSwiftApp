@@ -1,108 +1,107 @@
 import UIKit
 
-/// Verwaltet die fertigen Striche als eigene Layer.
+/// Renders the logical document in bounded vector batches.
 ///
-/// Ein Layer je Strich hält die Tinte beim Zoomen gestochen scharf (Vektor, kein
-/// Bitmap). Damit die Zahl der Layer bei viel Text nicht unbegrenzt wächst,
-/// werden die ältesten Striche zu einem gemeinsamen Layer zusammengefasst –
-/// die neuesten bleiben einzeln, damit Zurücknehmen sie einzeln entfernen kann.
+/// Batching is only a rendering detail: stroke identity and undo history live in
+/// `InkDocument`, so replacing a refined line can never destroy older undo steps.
 final class InkStrokeStore {
-    private struct Entry {
-        var points: [InkPoint]
-        var layer: CAShapeLayer
-        var path: CGPath
-    }
-
-    private var entries: [Entry] = []
+    let document = InkDocument()
     private let inkColor: UIColor
-    /// Pixeldichte, in der die Konturen gerendert werden (Zoom × Bildschirm).
-    var contentsScale: CGFloat = 2
-    /// Ab dieser Anzahl wird zusammengefasst.
-    private let mergeThreshold = 400
-    private let mergeBatch = 200
+    private weak var container: CALayer?
+    private weak var liveLayer: CALayer?
+    private var layers: [CALayer] = []
+    private var hiddenIDs: Set<UUID> = []
+    private let batchSize = 64
 
-    var count: Int { entries.count }
+    var contentsScale: CGFloat = 2 {
+        didSet { rebuild() }
+    }
+    var strokes: [InkStroke] { document.strokes }
+    var canUndo: Bool { document.canUndo }
+    var canRedo: Bool { document.canRedo }
+    var revision: UInt64 { document.revision }
 
     init(inkColor: UIColor) {
         self.inkColor = inkColor
     }
 
-    /// Einen fertigen Strich dauerhaft zeichnen.
-    func add(_ points: [InkPoint], to container: CALayer, below liveLayer: CALayer) {
-        guard !points.isEmpty, let entry = makeEntry(for: [points]) else { return }
-        container.insertSublayer(entry.layer, below: liveLayer)
-        entries.append(entry)
-        if entries.count > mergeThreshold {
-            mergeOldest(count: mergeBatch, in: container, below: liveLayer)
-        }
+    func attach(to container: CALayer, below liveLayer: CALayer) {
+        self.container = container
+        self.liveLayer = liveLayer
+        rebuild()
     }
 
-    /// Die letzten Striche – Grundlage für Verbindungen zwischen Buchstaben.
-    func recent(limit: Int) -> [[InkPoint]] {
-        guard limit > 0, !entries.isEmpty else { return [] }
-        let start = max(0, entries.count - limit)
-        return entries[start...].map { $0.points }
-    }
-
-    /// Nimmt den zuletzt gezeichneten Strich zurück.
     @discardableResult
-    func removeLast() -> Bool {
-        guard let last = entries.popLast() else { return false }
-        last.layer.removeFromSuperlayer()
+    func add(_ points: [InkPoint]) -> UUID {
+        let stroke = InkStroke(points: points)
+        document.add(stroke)
+        appendLayer(for: [stroke])
+        if layers.count > 96 { rebuild() }
+        return stroke.id
+    }
+
+    @discardableResult
+    func replace(ids: Set<UUID>, with points: [[InkPoint]]) -> Bool {
+        let replacements = points.map { InkStroke(points: $0, isRefined: true) }
+        guard document.replace(ids: ids, with: replacements) else { return false }
+        hiddenIDs.subtract(ids)
+        rebuild()
         return true
     }
 
-    /// Sorgt dafür, dass die Tinte nach dem Zoomen wieder scharf gerendert wird.
+    @discardableResult
+    func undo() -> Bool {
+        guard document.undo() else { return false }
+        hiddenIDs.removeAll()
+        rebuild()
+        return true
+    }
+
+    @discardableResult
+    func redo() -> Bool {
+        guard document.redo() else { return false }
+        hiddenIDs.removeAll()
+        rebuild()
+        return true
+    }
+
+    func recent(limit: Int) -> [[InkPoint]] {
+        Array(strokes.suffix(max(0, limit))).map { $0.points }
+    }
+
+    /// Hide source strokes while their morph is drawn on the live layer.
+    func setHidden(_ ids: Set<UUID>, hidden: Bool) {
+        if hidden { hiddenIDs.formUnion(ids) } else { hiddenIDs.subtract(ids) }
+        rebuild()
+    }
+
     func refreshContents(displayScale: CGFloat, zoom: Double) {
-        contentsScale = max(1, displayScale * CGFloat(min(3, max(1, zoom))))
-        let scale = contentsScale
-        for entry in entries {
-            entry.layer.contentsScale = scale
-            if let path = entry.layer.path {
-                entry.layer.path = path
-            }
+        let scale = max(1, displayScale * CGFloat(min(3, max(1, zoom))))
+        if abs(scale - contentsScale) > 0.01 { contentsScale = scale }
+    }
+
+    func rebuild() {
+        for layer in layers { layer.removeFromSuperlayer() }
+        layers.removeAll()
+        guard container != nil else { return }
+        let visible = strokes.filter { !hiddenIDs.contains($0.id) }
+        var start = 0
+        while start < visible.count {
+            let end = min(visible.count, start + batchSize)
+            appendLayer(for: Array(visible[start..<end]))
+            start = end
         }
     }
 
-    // MARK: - Zusammenfassen
-
-    private func mergeOldest(count: Int, in container: CALayer, below liveLayer: CALayer) {
-        guard entries.count > count + 4 else { return }
-        let group = Array(entries.prefix(count))
-        var strokes: [[InkPoint]] = []
-        for entry in group {
-            strokes.append(entry.points)
+    private func appendLayer(for strokes: [InkStroke]) {
+        guard let container, let liveLayer else { return }
+        let paths = strokes.map { $0.points }
+        let box = InkRibbon.unionBounds(paths)
+        guard box.width.isFinite, box.height.isFinite, box.width > 0 || box.height > 0 else {
+            return
         }
-        guard let merged = makeEntry(for: strokes) else { return }
-
-        container.insertSublayer(merged.layer, below: liveLayer)
-        for entry in group {
-            entry.layer.removeFromSuperlayer()
-        }
-
-        var combinedPoints: [InkPoint] = []
-        for stroke in strokes {
-            combinedPoints.append(contentsOf: stroke)
-        }
-        let mergedEntry = Entry(
-            points: combinedPoints, layer: merged.layer, path: merged.path
-        )
-        var updated: [Entry] = [mergedEntry]
-        updated.append(contentsOf: entries.dropFirst(count))
-        entries = updated
-    }
-
-    private func makeEntry(for strokes: [[InkPoint]]) -> Entry? {
-        let box = InkRibbon.unionBounds(strokes)
-        guard box.width.isFinite, box.height.isFinite else { return nil }
-        guard box.width > 0 || box.height > 0 else { return nil }
-        guard box.width < 40000, box.height < 40000 else { return nil }
-
         let path = CGMutablePath()
-        for stroke in strokes {
-            InkRibbon.append(to: path, points: stroke, origin: box.origin)
-        }
-
+        for points in paths { InkRibbon.append(to: path, points: points, origin: box.origin) }
         let layer = CAShapeLayer()
         layer.fillColor = inkColor.cgColor
         layer.strokeColor = nil
@@ -111,12 +110,7 @@ final class InkStrokeStore {
         layer.bounds = CGRect(origin: .zero, size: box.size)
         layer.path = path
         layer.contentsScale = max(1, contentsScale)
-        layer.isOpaque = false
-
-        var points: [InkPoint] = []
-        for stroke in strokes {
-            points.append(contentsOf: stroke)
-        }
-        return Entry(points: points, layer: layer, path: path)
+        container.insertSublayer(layer, below: liveLayer)
+        layers.append(layer)
     }
 }

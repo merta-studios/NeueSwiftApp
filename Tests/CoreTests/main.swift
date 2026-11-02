@@ -755,6 +755,97 @@ expect(
     ]).allSatisfy { $0.position.x.isFinite && $0.position.y.isFinite },
     "Ungültige Koordinaten werden verworfen"
 )
+
+// MARK: - Document history and atomic line refinement
+
+let document = InkDocument()
+let firstID = document.add(InkStroke(points: [InkPoint(position: Vec2(0, 0), width: 2)]))
+let secondID = document.add(InkStroke(points: [InkPoint(position: Vec2(10, 0), width: 2)]))
+expectEqual(document.strokes.count, 2, "Two logical strokes")
+let replacement = [InkStroke(points: [InkPoint(position: Vec2(1, 1), width: 2)], isRefined: true)]
+expect(
+    document.replace(ids: Set([firstID, secondID]), with: replacement), "Atomic replace succeeds")
+expectEqual(document.strokes.count, 1, "Line replacement is one logical group")
+expect(document.strokes[0].isRefined, "Replacement marked refined")
+expect(document.undo(), "Undo refinement")
+expectEqual(document.strokes.count, 2, "Undo restores original stroke identities")
+expectEqual(document.strokes[0].id, firstID, "First identity preserved")
+expectEqual(document.strokes[1].id, secondID, "Second identity preserved")
+expect(document.redo(), "Redo refinement")
+expectEqual(document.strokes.count, 1, "Redo restores refined line")
+expect(!document.replace(ids: [UUID()], with: []), "Stale ids cannot replace current ink")
+document.add(InkStroke(points: [InkPoint(position: Vec2(20, 0), width: 2)]))
+expect(!document.canRedo, "New ink clears redo branch")
+
+// MARK: - Many-to-many morph planning
+
+let morphSource = [
+    [InkPoint(position: Vec2(0, 0), width: 2), InkPoint(position: Vec2(30, 0), width: 2)]
+]
+let morphTarget = (0..<4).map { i in
+    [
+        InkPoint(position: Vec2(Double(i) * 8, 0), width: 2),
+        InkPoint(position: Vec2(Double(i) * 8 + 6, 4), width: 2),
+    ]
+}
+let morphPairs = StrokeMorphPlanner.plan(source: morphSource, target: morphTarget)
+expectEqual(morphPairs.count, 4, "One cursive stroke can morph into four letter strokes")
+expect(
+    morphPairs.allSatisfy { $0.source.count == $0.target.count && $0.source.count >= 2 },
+    "Morph pairs have matching samples")
+expect(StrokeMorphPlanner.plan(source: [], target: morphTarget).isEmpty, "Empty morph is safe")
+let reversePairs = StrokeMorphPlanner.plan(source: morphTarget, target: morphSource)
+expectEqual(reversePairs.count, 4, "Many printed strokes can converge into one ligature")
+
+// MARK: - Handwriting templates
+
+expect(HandwritingGlyphs.glyph(for: "a") != nil, "Lowercase template")
+expect(HandwritingGlyphs.glyph(for: "Ä") != nil, "German uppercase umlaut")
+expect(HandwritingGlyphs.glyph(for: "ß") != nil, "Eszett template")
+expect(HandwritingGlyphs.glyph(for: "7") != nil, "Digit template")
+expect(HandwritingGlyphs.glyph(for: "🙂") == nil, "Unsupported glyph is rejected, not guessed")
+for value in 33...126 {
+    let character = Character(Unicode.Scalar(value)!)
+    if let glyph = HandwritingGlyphs.glyph(for: character) {
+        expect(
+            glyph.strokes.allSatisfy { $0.count >= 2 },
+            "Printable glyph has drawable strokes: \(character)")
+    }
+}
+
+// MARK: - Input contract and writing-line grouping
+
+expect(InkInputPolicy.acceptsWriting(.pencil), "Pencil writes")
+expect(!InkInputPolicy.acceptsWriting(.finger), "Finger never writes, even before first Pencil use")
+expect(!InkInputPolicy.acceptsWriting(.other), "Unknown touch never writes")
+expect(InkInputPolicy.acceptsNavigation(.finger), "Finger navigates")
+expect(!InkInputPolicy.acceptsNavigation(.pencil), "Pencil does not navigate")
+expect(
+    InkInputPolicy.acceptsPrediction(sampleTime: 1.008, lastConfirmedTime: 1),
+    "Short prediction accepted")
+expect(
+    !InkInputPolicy.acceptsPrediction(sampleTime: 1.03, lastConfirmedTime: 1),
+    "Long prediction rejected")
+expect(
+    !InkInputPolicy.acceptsPrediction(sampleTime: .nan, lastConfirmedTime: 1),
+    "Invalid prediction rejected")
+
+let lineA = InkStroke(points: [
+    InkPoint(position: Vec2(0, 100), width: 2), InkPoint(position: Vec2(20, 120), width: 2),
+])
+let lineB = InkStroke(points: [
+    InkPoint(position: Vec2(25, 102), width: 2), InkPoint(position: Vec2(45, 119), width: 2),
+])
+let nextLine = InkStroke(points: [
+    InkPoint(position: Vec2(0, 160), width: 2), InkPoint(position: Vec2(20, 180), width: 2),
+])
+let grouped = WritingLineGrouping.pendingLine(in: [lineA, lineB, nextLine])
+expectEqual(grouped.count, 1, "Only the newest line is selected")
+expectEqual(grouped.first?.id, nextLine.id, "Newest line identity")
+let sameLine = WritingLineGrouping.pendingLine(in: [lineA, lineB])
+expectEqual(sameLine.count, 2, "Nearby strokes on one baseline group together")
+expect(WritingLineGrouping.pendingLine(in: []).isEmpty, "Empty page has no pending line")
+
 // MARK: - Ergebnis
 
 if checks == 0 {

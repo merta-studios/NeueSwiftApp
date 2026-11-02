@@ -123,6 +123,10 @@ attempt_simulator() {
     log "Build für den iOS-Simulator"
     if ! build_for "platform=iOS Simulator,id=$udid" "xcodebuild-simulator.log"; then
         err "Build für den Simulator fehlgeschlagen (siehe build/xcodebuild-simulator.log)."
+        while IFS= read -r line; do
+            [ -n "$line" ] || continue
+            ci_annotate error "build/xcodebuild-simulator.log" 1 1 "$line"
+        done < <(grep -E 'error:' "$log_dir/xcodebuild-simulator.log" | head -20)
         return 1
     fi
 

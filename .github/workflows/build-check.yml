@@ -39,6 +39,7 @@ env:
   SWIFT_IMAGE: ${{ vars.SWIFT_IMAGE || 'swift:6.2-noble' }}
 
 jobs:
+
   syntax:
     name: Syntax (alle Swift-Dateien)
     runs-on: ubuntu-24.04
@@ -123,6 +124,16 @@ jobs:
         env:
           APP_SCHEME: ${{ vars.APP_SCHEME }}
         run: ci/ios-build-test.sh
+
+      - name: Compiler-Fehler als Annotationen melden
+        if: failure()
+        run: |
+          shopt -s nullglob
+          for log in build/xcodebuild-*.log; do
+            grep -E 'error:' "$log" | head -20 | while IFS= read -r line; do
+              printf '::error::%s\n' "$line"
+            done
+          done
 
       - name: Screenshot des Smoke-Tests hochladen
         if: always()

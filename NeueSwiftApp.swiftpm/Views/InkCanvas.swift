@@ -1,15 +1,16 @@
 import SwiftUI
 
-/// SwiftUI-Verpackung für den Schreibbereich.
-///
-/// Der Schreibbereich ist eine UIKit-Ansicht, weil Stift-Eingabe mit
-/// `coalescedTouches` und ein `CADisplayLink` für die Linien-Animation dort
-/// direkt verfügbar sind. Nach außen ist das ein einziges View ohne Parameter –
-/// kein Menü, keine Werkzeugleiste, kein Speichern.
+/// SwiftUI-Verpackung für das eigene UIKit-Canvas (kein PencilKit).
 struct InkCanvas: UIViewRepresentable {
+    let controller: InkCanvasController
+
     func makeUIView(context: Context) -> InkCanvasView {
-        InkCanvasView()
+        let view = InkCanvasView()
+        view.controller = controller
+        return view
     }
 
-    func updateUIView(_ uiView: InkCanvasView, context: Context) {}
+    func updateUIView(_ uiView: InkCanvasView, context: Context) {
+        uiView.controller = controller
+    }
 }
