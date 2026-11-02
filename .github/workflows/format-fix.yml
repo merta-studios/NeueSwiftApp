@@ -1,0 +1,21 @@
+name: Format-Fix (einmalig)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Formatieren
+        run: ci/run-swift.sh ci/lint.sh --fix
+      - name: Änderungen zurück auf den Branch schreiben
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "style: swift-format"
+          git push origin HEAD:${{ github.ref_name }}
