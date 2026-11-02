@@ -105,7 +105,6 @@ enum HandwritingGlyphs {
         "|": Glyph(advance: 4, strokes: [[Vec2(4, -3), Vec2(4, 29)]]),
         "}": Glyph(advance: 7, strokes: [[Vec2(5, -3), Vec2(7, -2), Vec2(8, -1), Vec2(9, 1), Vec2(9, 3), Vec2(8, 5), Vec2(7, 6), Vec2(6, 8), Vec2(6, 10), Vec2(8, 12)], [Vec2(7, -2), Vec2(8, 0), Vec2(8, 2), Vec2(7, 4), Vec2(6, 5), Vec2(5, 7), Vec2(5, 9), Vec2(6, 11), Vec2(10, 13), Vec2(6, 15), Vec2(5, 17), Vec2(5, 19), Vec2(6, 21), Vec2(7, 22), Vec2(8, 24), Vec2(8, 26), Vec2(7, 28)], [Vec2(8, 14), Vec2(6, 16), Vec2(6, 18), Vec2(7, 20), Vec2(8, 21), Vec2(9, 23), Vec2(9, 25), Vec2(8, 27), Vec2(7, 28), Vec2(5, 29)]]),
         "~": Glyph(advance: 12, strokes: [[Vec2(3, 16), Vec2(3, 14), Vec2(4, 11), Vec2(6, 10), Vec2(8, 10), Vec2(10, 11), Vec2(14, 14), Vec2(16, 15), Vec2(18, 15), Vec2(20, 14), Vec2(21, 12)], [Vec2(3, 14), Vec2(4, 12), Vec2(6, 11), Vec2(8, 11), Vec2(10, 12), Vec2(14, 15), Vec2(16, 16), Vec2(18, 16), Vec2(20, 15), Vec2(21, 12), Vec2(21, 10)]]),
-        "": Glyph(advance: 7, strokes: [[Vec2(6, 1), Vec2(4, 2), Vec2(3, 4), Vec2(3, 6), Vec2(4, 8), Vec2(6, 9), Vec2(8, 9), Vec2(10, 8), Vec2(11, 6), Vec2(11, 4), Vec2(10, 2), Vec2(8, 1), Vec2(6, 1)]]),
     ]
 
     static func glyph(for character: Character) -> Glyph? {
