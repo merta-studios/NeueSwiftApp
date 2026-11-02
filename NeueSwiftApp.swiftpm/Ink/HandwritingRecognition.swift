@@ -64,7 +64,7 @@ final class HandwritingRecognition {
                     }
                     return Candidate(
                         text: text, confidence: Double(recognized.confidence),
-                        bounds: Self.pageBounds(recognized.boundingBox, crop: crop),
+                        bounds: Self.pageBounds(observation.boundingBox, crop: crop),
                         glyphs: glyphs
                     )
                 }
