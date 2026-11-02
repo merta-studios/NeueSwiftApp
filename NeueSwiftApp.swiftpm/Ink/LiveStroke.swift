@@ -7,8 +7,10 @@ import UIKit
 /// wird `display` über eine kurze Wellenanimation in `target` überführt – die
 /// Linie wandert also sichtbar in ihre schöne Form, statt ausgetauscht zu werden.
 final class LiveStroke {
-    /// Rohpunkte des Stifts.
+    /// Bestätigte Rohpunkte des Stifts (nur diese werden dauerhaft gespeichert).
     var inputs: [InkInput] = []
+    /// Kurzfristige Vorschau-Samples; werden bei jedem Touch-Ereignis verworfen.
+    var predictedInputs: [InkInput] = []
     /// Aktuell sichtbare Geometrie.
     var display: [InkPoint] = []
     /// Zielgeometrie nach der Aufbereitung.
