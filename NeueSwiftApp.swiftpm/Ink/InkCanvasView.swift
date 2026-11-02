@@ -369,7 +369,6 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
                 lineMorph = nil
                 needsRedraw = true
                 publishStatus("Schrift verfeinert · Drei Finger tippen zum Widerrufen")
-                scheduleRefinement()
             }
         }
         if needsRedraw { redrawLiveLayer() }
