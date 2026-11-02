@@ -304,7 +304,7 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
                     self.lineMorph == nil,
                     let target = HandwritingComposer.compose(words: words, source: snapshot.source)
                 else { return }
-                if self.traitCollection.accessibilityReduceMotionEnabled {
+                if UIAccessibility.isReduceMotionEnabled {
                     self.store.replace(ids: snapshot.ids, with: target)
                     self.publishStatus("Schrift verfeinert · Zum Widerrufen tippen")
                 } else if let morph = LineMorph(
@@ -504,7 +504,7 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
         }
     }
 
-    func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+    override func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         // Palm rejection: a resting hand cannot start navigation mid-stroke.
         activeStroke == nil
     }

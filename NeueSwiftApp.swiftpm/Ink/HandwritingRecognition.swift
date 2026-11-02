@@ -47,7 +47,7 @@ final class HandwritingRecognition {
             let handler = VNImageRequestHandler(cgImage: image, options: [:])
             try handler.perform([request])
             return (request.results ?? []).map { observation -> [Candidate] in
-                observation.topCandidates(3).compactMap { recognized in
+                observation.topCandidates(3).compactMap { recognized -> Candidate? in
                     guard recognized.confidence >= 0.55 else { return nil }
                     var glyphs: [Candidate.Glyph] = []
                     let text = recognized.string
