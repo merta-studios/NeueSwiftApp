@@ -53,8 +53,7 @@ final class HandwritingRecognition {
                     let text = recognized.string
                     for index in text.indices {
                         let next = text.index(after: index)
-                        let range = NSRange(index..<next, in: text)
-                        if let box = try? recognized.boundingBox(for: range) {
+                        if let box = try? recognized.boundingBox(for: index..<next) {
                             glyphs.append(
                                 Candidate.Glyph(
                                     character: text[index],
