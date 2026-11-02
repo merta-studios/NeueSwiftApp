@@ -8,7 +8,9 @@ final class InkCanvasController: ObservableObject {
     @Published private(set) var canRedo = false
     @Published private(set) var isRefining = false
     @Published private(set) var status = "Nur Apple Pencil schreibt · Finger bewegen die Seite"
-    @Published var refinementEnabled = UserDefaults.standard.object(forKey: "ink.refinement.enabled") as? Bool ?? true {
+    @Published var refinementEnabled =
+        UserDefaults.standard.object(forKey: "ink.refinement.enabled") as? Bool ?? true
+    {
         didSet {
             UserDefaults.standard.set(refinementEnabled, forKey: "ink.refinement.enabled")
             onToggleRefinement?(refinementEnabled)

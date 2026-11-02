@@ -39,7 +39,8 @@ struct ContentView: View {
                     .accessibilityLabel("Wiederholen")
 
                     Menu {
-                        Toggle("Schrift automatisch verfeinern", isOn: $controller.refinementEnabled)
+                        Toggle(
+                            "Schrift automatisch verfeinern", isOn: $controller.refinementEnabled)
                         Button {
                             controller.onRefine?()
                         } label: {

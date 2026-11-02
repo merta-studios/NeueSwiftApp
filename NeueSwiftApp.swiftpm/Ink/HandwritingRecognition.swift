@@ -61,7 +61,7 @@ final class HandwritingRecognition {
                                     bounds: Self.pageBounds(box.boundingBox, crop: crop)
                                 )
                             )
-                }
+                        }
                     }
                     return Candidate(
                         text: text, confidence: Double(recognized.confidence),
@@ -74,7 +74,8 @@ final class HandwritingRecognition {
         try Task.checkCancellation()
         let groups = candidates.filter { !$0.isEmpty }
         guard !groups.isEmpty else { throw Failure.noText }
-        let choices = await AppleIntelligenceAdapter.choose(in: groups.map { group in group.map { $0.text } })
+        let choices = await AppleIntelligenceAdapter.choose(
+            in: groups.map { group in group.map { $0.text } })
         var words: [RecognizedWord] = []
         for (index, group) in groups.enumerated() {
             let choice = choices.indices.contains(index) ? choices[index] : 0
@@ -132,7 +133,7 @@ final class HandwritingRecognition {
             let payload = candidates.enumerated().map { index, texts in
                 "Word \(index + 1): "
                     + texts.enumerated().map { "[\($0.offset)] \($0.element)" }
-                        .joined(separator: " | ")
+                    .joined(separator: " | ")
             }.joined(separator: "\n")
             do {
                 let response = try await session.respond(

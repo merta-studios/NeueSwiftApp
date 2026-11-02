@@ -172,16 +172,20 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
     }
 
     private func collect(_ touch: UITouch, event: UIEvent?, includePredictions: Bool = true) {
-        guard let stroke = activeStroke, InkInputPolicy.acceptsWriting(Self.kind(of: touch)) else { return }
+        guard let stroke = activeStroke, InkInputPolicy.acceptsWriting(Self.kind(of: touch)) else {
+            return
+        }
         stroke.predictedInputs.removeAll(keepingCapacity: true)
         for sample in event?.coalescedTouches(for: touch) ?? [touch] {
             append(sample, to: stroke, predicted: false)
         }
         if includePredictions, let last = stroke.inputs.last {
             for sample in event?.predictedTouches(for: touch) ?? [] {
-                guard InkInputPolicy.acceptsPrediction(
-                    sampleTime: sample.timestamp, lastConfirmedTime: last.time
-                ) else { break }
+                guard
+                    InkInputPolicy.acceptsPrediction(
+                        sampleTime: sample.timestamp, lastConfirmedTime: last.time
+                    )
+                else { break }
                 append(sample, to: stroke, predicted: true)
                 if stroke.predictedInputs.count >= 4 { break }
             }
@@ -221,7 +225,8 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
         guard !target.isEmpty else { return }
         let neighbors = neighborStrokes()
         if !neighbors.isEmpty {
-            target = JunctionWelder.weld(target, to: neighbors, radius: weldRadius(for: target)).points
+            target =
+                JunctionWelder.weld(target, to: neighbors, radius: weldRadius(for: target)).points
         }
         stroke.target = target
         if stroke.beginMorph(now: CACurrentMediaTime()) {
@@ -276,9 +281,11 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
             morphingStrokes.isEmpty
         else { return }
         let line = HandwritingComposer.pendingLine(in: store.strokes)
-        guard !line.isEmpty, let snapshot = HandwritingComposer.snapshot(
-            strokes: line, revision: store.revision
-        ) else { return }
+        guard !line.isEmpty,
+            let snapshot = HandwritingComposer.snapshot(
+                strokes: line, revision: store.revision
+            )
+        else { return }
         isRefining = true
         publishStatus("Schrift wird lokal erkannt …")
         recognitionTask = Task { [weak self] in
@@ -322,7 +329,8 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
 
     private func startDisplayLink() {
         guard displayLink == nil, window != nil else { return }
-        let link = CADisplayLink(target: displayLinkProxy, selector: #selector(DisplayLinkProxy.step))
+        let link = CADisplayLink(
+            target: displayLinkProxy, selector: #selector(DisplayLinkProxy.step))
         link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
         link.add(to: .main, forMode: .common)
         displayLink = link
@@ -371,7 +379,9 @@ final class InkCanvasView: UIView, UIGestureRecognizerDelegate {
     private func redrawLiveLayer() {
         var visible: [[InkPoint]] = []
         if let stroke = activeStroke, !stroke.display.isEmpty { visible.append(stroke.display) }
-        for stroke in morphingStrokes where !stroke.display.isEmpty { visible.append(stroke.display) }
+        for stroke in morphingStrokes where !stroke.display.isEmpty {
+            visible.append(stroke.display)
+        }
         if let lineMorph { visible.append(contentsOf: lineMorph.visible) }
         let box = InkRibbon.unionBounds(visible)
         guard !visible.isEmpty, box.width > 0.5 || box.height > 0.5 else {

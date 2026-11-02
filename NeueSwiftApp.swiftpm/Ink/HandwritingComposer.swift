@@ -63,7 +63,9 @@ enum HandwritingComposer {
                 return nil
             }
             for glyph in word.glyphs {
-                guard let template = HandwritingGlyphs.glyph(for: glyph.character) else { return nil }
+                guard let template = HandwritingGlyphs.glyph(for: glyph.character) else {
+                    return nil
+                }
                 let box = glyph.bounds
                 guard box.width > 0.5, box.height > 0.5,
                     box.width < original.width * 0.8 + 12,
@@ -83,7 +85,8 @@ enum HandwritingComposer {
                             width: max(0.8, averageWidth * 0.92)
                         )
                     }
-                    points = PolylineGeometry.resample(points, count: max(2, min(180, points.count * 5)))
+                    points = PolylineGeometry.resample(
+                        points, count: max(2, min(180, points.count * 5)))
                     let corners = CornerDetector.detect(
                         points: points.map { $0.position }, spacing: 1
                     )

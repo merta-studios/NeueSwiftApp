@@ -18,7 +18,8 @@ enum StrokeMorphPlanner {
         let to = target.filter { !$0.isEmpty }
         guard !from.isEmpty, !to.isEmpty else { return [] }
         let count = max(from.count, to.count)
-        let mapping = assign(sourceCount: from.count, targetCount: to.count, source: from, target: to)
+        let mapping = assign(
+            sourceCount: from.count, targetCount: to.count, source: from, target: to)
         var pairs: [StrokeMorphPair] = []
         pairs.reserveCapacity(count)
         for index in 0..<count {
@@ -48,7 +49,8 @@ enum StrokeMorphPlanner {
         var previous = 0
         if sourceCount < targetCount {
             for t in 0..<targetCount {
-                let ideal = Int(Double(t) * Double(sourceCount - 1) / Double(max(1, targetCount - 1)))
+                let ideal = Int(
+                    Double(t) * Double(sourceCount - 1) / Double(max(1, targetCount - 1)))
                 let lower = max(previous, ideal - 1)
                 let upper = min(sourceCount - 1, ideal + 1)
                 var best = lower
@@ -67,7 +69,8 @@ enum StrokeMorphPlanner {
             }
         } else {
             for s in 0..<sourceCount {
-                let ideal = Int(Double(s) * Double(targetCount - 1) / Double(max(1, sourceCount - 1)))
+                let ideal = Int(
+                    Double(s) * Double(targetCount - 1) / Double(max(1, sourceCount - 1)))
                 let lower = max(previous, ideal - 1)
                 let upper = min(targetCount - 1, ideal + 1)
                 var best = lower

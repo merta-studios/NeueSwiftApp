@@ -763,7 +763,8 @@ let firstID = document.add(InkStroke(points: [InkPoint(position: Vec2(0, 0), wid
 let secondID = document.add(InkStroke(points: [InkPoint(position: Vec2(10, 0), width: 2)]))
 expectEqual(document.strokes.count, 2, "Two logical strokes")
 let replacement = [InkStroke(points: [InkPoint(position: Vec2(1, 1), width: 2)], isRefined: true)]
-expect(document.replace(ids: Set([firstID, secondID]), with: replacement), "Atomic replace succeeds")
+expect(
+    document.replace(ids: Set([firstID, secondID]), with: replacement), "Atomic replace succeeds")
 expectEqual(document.strokes.count, 1, "Line replacement is one logical group")
 expect(document.strokes[0].isRefined, "Replacement marked refined")
 expect(document.undo(), "Undo refinement")
@@ -778,14 +779,20 @@ expect(!document.canRedo, "New ink clears redo branch")
 
 // MARK: - Many-to-many morph planning
 
-let morphSource = [[InkPoint(position: Vec2(0, 0), width: 2), InkPoint(position: Vec2(30, 0), width: 2)]]
+let morphSource = [
+    [InkPoint(position: Vec2(0, 0), width: 2), InkPoint(position: Vec2(30, 0), width: 2)]
+]
 let morphTarget = (0..<4).map { i in
-    [InkPoint(position: Vec2(Double(i) * 8, 0), width: 2),
-     InkPoint(position: Vec2(Double(i) * 8 + 6, 4), width: 2)]
+    [
+        InkPoint(position: Vec2(Double(i) * 8, 0), width: 2),
+        InkPoint(position: Vec2(Double(i) * 8 + 6, 4), width: 2),
+    ]
 }
 let morphPairs = StrokeMorphPlanner.plan(source: morphSource, target: morphTarget)
 expectEqual(morphPairs.count, 4, "One cursive stroke can morph into four letter strokes")
-expect(morphPairs.allSatisfy { $0.source.count == $0.target.count && $0.source.count >= 2 }, "Morph pairs have matching samples")
+expect(
+    morphPairs.allSatisfy { $0.source.count == $0.target.count && $0.source.count >= 2 },
+    "Morph pairs have matching samples")
 expect(StrokeMorphPlanner.plan(source: [], target: morphTarget).isEmpty, "Empty morph is safe")
 let reversePairs = StrokeMorphPlanner.plan(source: morphTarget, target: morphSource)
 expectEqual(reversePairs.count, 4, "Many printed strokes can converge into one ligature")
@@ -800,10 +807,11 @@ expect(HandwritingGlyphs.glyph(for: "🙂") == nil, "Unsupported glyph is reject
 for scalar in Unicode.Scalar(33)...Unicode.Scalar(126) {
     let character = Character(scalar)
     if let glyph = HandwritingGlyphs.glyph(for: character) {
-        expect(glyph.strokes.allSatisfy { $0.count >= 2 }, "Printable glyph has drawable strokes: \(character)")
+        expect(
+            glyph.strokes.allSatisfy { $0.count >= 2 },
+            "Printable glyph has drawable strokes: \(character)")
     }
 }
-
 
 // MARK: - Input contract and writing-line grouping
 
@@ -812,13 +820,25 @@ expect(!InkInputPolicy.acceptsWriting(.finger), "Finger never writes, even befor
 expect(!InkInputPolicy.acceptsWriting(.other), "Unknown touch never writes")
 expect(InkInputPolicy.acceptsNavigation(.finger), "Finger navigates")
 expect(!InkInputPolicy.acceptsNavigation(.pencil), "Pencil does not navigate")
-expect(InkInputPolicy.acceptsPrediction(sampleTime: 1.008, lastConfirmedTime: 1), "Short prediction accepted")
-expect(!InkInputPolicy.acceptsPrediction(sampleTime: 1.03, lastConfirmedTime: 1), "Long prediction rejected")
-expect(!InkInputPolicy.acceptsPrediction(sampleTime: .nan, lastConfirmedTime: 1), "Invalid prediction rejected")
+expect(
+    InkInputPolicy.acceptsPrediction(sampleTime: 1.008, lastConfirmedTime: 1),
+    "Short prediction accepted")
+expect(
+    !InkInputPolicy.acceptsPrediction(sampleTime: 1.03, lastConfirmedTime: 1),
+    "Long prediction rejected")
+expect(
+    !InkInputPolicy.acceptsPrediction(sampleTime: .nan, lastConfirmedTime: 1),
+    "Invalid prediction rejected")
 
-let lineA = InkStroke(points: [InkPoint(position: Vec2(0, 100), width: 2), InkPoint(position: Vec2(20, 120), width: 2)])
-let lineB = InkStroke(points: [InkPoint(position: Vec2(25, 102), width: 2), InkPoint(position: Vec2(45, 119), width: 2)])
-let nextLine = InkStroke(points: [InkPoint(position: Vec2(0, 160), width: 2), InkPoint(position: Vec2(20, 180), width: 2)])
+let lineA = InkStroke(points: [
+    InkPoint(position: Vec2(0, 100), width: 2), InkPoint(position: Vec2(20, 120), width: 2),
+])
+let lineB = InkStroke(points: [
+    InkPoint(position: Vec2(25, 102), width: 2), InkPoint(position: Vec2(45, 119), width: 2),
+])
+let nextLine = InkStroke(points: [
+    InkPoint(position: Vec2(0, 160), width: 2), InkPoint(position: Vec2(20, 180), width: 2),
+])
 let grouped = WritingLineGrouping.pendingLine(in: [lineA, lineB, nextLine])
 expectEqual(grouped.count, 1, "Only the newest line is selected")
 expectEqual(grouped.first?.id, nextLine.id, "Newest line identity")
